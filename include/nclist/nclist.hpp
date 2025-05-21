@@ -7,31 +7,22 @@
 
 namespace nclist {
 
-/**
- * @cond
- */
-template<typename Index_>
-struct Child {
-    Child() = default;
-    Child(Index_ offset, Index_ id) : offset(offset), id(id) {}
-    Index_ offset = 0;
-    Index_ id = 0;
-};
-
-template<typename Index_>
-struct Node {
-    std::vector<Child<Index_> > children;
-};
-/**
- * @endcond
- */
-
-template<typename Index_>
+template<typename Index_, typename Position_>
 struct Nclist {
 /**
  * @cond
  */
-    std::vector<Node<Index_> > contents;
+    struct Node {
+        Index_ id;
+        Position_ start, end;
+        Index_ children_start;
+        Index_ children_end;
+        Index_ duplicates_start;
+        Index_ duplicates_end;
+    };
+    std::vector<Node> nodes; 
+    std::vector<Index_> children;
+    std::vector<Index_> duplicates;
 /**
  * @endcond
  */
@@ -50,6 +41,19 @@ Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_
         }
     });
 
+    // This uses offsets instead of pointers to dynamically allocated arrays.
+    // We can't easily do that in C++ while still using std::vector, because
+    // the type of the node is not yet complete when it references itself.
+    struct WorkingNode {
+        WorkingNode(Index_ id) : id(id) {}
+        Index_ id = 0;
+        std::vector<Index_> children;
+        std::vector<Index_> duplicates;
+    };
+    std::vector<WorkingNode> contents;
+    contents.reserve(static_cast<std::size_t>(num_ranges) + 1);
+    contents.resize(1);
+
     struct StackElement {
         StackElement() = default;
         StackElement(Index_ offset, Position_ end) : offset(offset), end(end) {}
@@ -57,21 +61,34 @@ Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_
         Position_ end;
     };
     std::vector<StackElement> stack;
-    Nclist<Index_> output;
-    output.contents.resize(static_cast<std::size_t>(num_ranges) + 1);
 
+    Position_ last_start = 0, last_end = 0;
     for (Index_ r = 0; r < num_ranges; ++r) {
         auto curid = subset[r];
-        auto curend = end[curid];
-        while (!stack.empty() && end[stack.back().id] < curend) {
+        auto curend = end[curid], curstart = start[curid];
+        while (!stack.empty() && stack.back().end < curend) {
             stack.pop_back();
         }
 
 		auto landing_offset = (stack.empty() ? static_cast<Index_>(0) : stack.back().offset);
         auto& landing_node = output.contents[landing_offset]; 
-        landing_node.children.emplace_back(r + 1, curid); 
-        stack.emplace_back(r + 1, curend);
+
+        // Special handling of duplicate ranges.
+        if (r && last_start == curstart && last_end == curend) {
+            landing_node.duplicates.push_back(curid);
+            continue;
+        }
+
+        Index_ used = contents.size();
+        contents.emplace_back(curid);
+        landing_node.children.push_back(used); 
+        stack.emplace_back(used, curend);
+        last_start = curstart;
+        last_end = curend;
     }
+
+    // Formatting it into a contiguous structure for export.
+
 }
 /**
  * @endcond
