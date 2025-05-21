@@ -33,8 +33,8 @@ void reference_search(
         trace.emplace_back(query_ends[q], false, true, q);
     }
     for (decltype(nsubject) q = 0; q < nsubject; ++q) {
-        trace.emplace_back(subject_starts[q], true, false);
-        trace.emplace_back(subject_ends[q], false, false);
+        trace.emplace_back(subject_starts[q], true, false, q);
+        trace.emplace_back(subject_ends[q], false, false, q);
     }
     std::sort(trace.begin(), trace.end());
 

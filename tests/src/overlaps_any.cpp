@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <vector>
+#include <random>
 
 #include "nclist/overlaps_any.hpp"
 #include "utils.hpp"
@@ -134,3 +135,58 @@ TEST(OverlapsAny, SimpleNested) {
         EXPECT_EQ(output[3], 4);
     }
 }
+
+class OverlapsAnyRandomizedTest : public ::testing::TestWithParam<std::tuple<int, int> > {
+protected:
+    int nquery, nsubject;
+    std::vector<int> query_start, query_end;
+    std::vector<int> subject_start, subject_end;
+
+    void SetUp() {
+        auto params = GetParam();
+        nquery = std::get<0>(params);
+        nsubject = std::get<1>(params);
+        std::mt19937_64 rng(nquery * 13 + nsubject);
+
+        query_start.reserve(nquery);
+        query_end.reserve(nquery);
+        for (int q = 0; q < nquery; ++q) {
+            int qstart = rng() % 1000 - 500;
+            int qwidth = rng() % 50 + 1;
+            query_start.push_back(qstart);
+            query_end.push_back(qstart + qwidth);
+        }
+
+        subject_start.reserve(nsubject);
+        subject_end.reserve(nsubject);
+        for (int q = 0; q < nsubject; ++q) {
+            int sstart = rng() % 1000 - 500;
+            int swidth = rng() % 50 + 1;
+            subject_start.push_back(sstart);
+            subject_end.push_back(sstart + swidth);
+        }
+    }
+};
+
+TEST_P(OverlapsAnyRandomizedTest, Basic) {
+    std::vector<std::vector<int> > ref; 
+    reference_search(query_start, query_end, subject_start, subject_end, ref);
+
+    auto index = nclist::build(nsubject, subject_start.data(), subject_end.data());
+    std::vector<int> results;
+    nclist::OverlapsAnyWorkspace<int> work;
+    for (int q = 0; q < nquery; ++q) {
+        nclist::overlaps_any(index, query_start[q], query_end[q], nclist::OverlapsAnyParameters<int>(), work, results);
+        std::sort(results.begin(), results.end());
+        EXPECT_EQ(results, ref[q]);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    OverlapsAny,
+    OverlapsAnyRandomizedTest,
+    ::testing::Combine(
+        ::testing::Values(10, 100, 1000),
+        ::testing::Values(10, 100, 1000)
+    )
+);
