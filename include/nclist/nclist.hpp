@@ -14,10 +14,9 @@ struct Nclist {
 /**
  * @cond
  */
-    // First entry of 'coords' and 'nodes' refers to the root node of the tree
-    // and does not reference any interval.
-    std::vector<std::pair<Position_, Position_> > coords;
-
+    // First entry of 'nodes' refers to the root node of the tree and does not
+    // reference any interval; it is only included to enable convenient
+    // traversal of the tree by moving through 'nodes'.
     struct Node {
         Index_ id = 0;
         Index_ children_start = 0;
@@ -27,8 +26,12 @@ struct Nclist {
     };
     std::vector<Node> nodes; 
 
-    // These are concatenations of all the individual children/duplicates vectors,
-    // to improve cache locality during tree traversal.
+    // These are the start and end positions corresponding to Node::id. We put
+    // them in a separate vector for better cache locality in binary searches.
+    std::vector<Position_> starts, ends;
+
+    // These are concatenations of all the individual 'children'/'duplicates'
+    // vectors, to improve cache locality during tree traversal.
     std::vector<Index_> children;
     std::vector<Index_> duplicates;
 /**
@@ -102,15 +105,9 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
     // Depth-first traversal of the NCList tree, to convert it into a
     // contiguous structure for export. This should improve cache locality.
     Nclist<Index_, Position_> output;
-    auto tree_size = contents.size(); 
-    output.coords.resize(tree_size);
-    output.nodes.resize(tree_size);
-    for (decltype(tree_size) i = 1; i < tree_size; ++i) {
-        const auto& target = contents[i];
-        output.coords[i].first = start[target.id];
-        output.coords[i].second = end[target.id];
-    }
-
+    output.nodes.resize(contents.size());
+    output.starts.resize(contents.size());
+    output.ends.resize(contents.size());
     output.nodes[0].children_end = contents[0].children.size();
     output.children.reserve(num_ranges - num_duplicates);
     output.duplicates.reserve(num_duplicates);
@@ -135,6 +132,8 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
         const auto& child_node = contents[chosen_child];
         auto& child_node_out = output.nodes[chosen_child];
         child_node_out.id = child_node.id;
+        output.starts[chosen_child] = start[child_node.id];
+        output.ends[chosen_child] = end[child_node.id];
 
         if (!child_node.duplicates.empty()) {
             child_node_out.duplicates_start = output.duplicates.size();
