@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <algorithm>
 #include <numeric>
+#include <limits>
 
 namespace nclist {
 
@@ -46,9 +47,11 @@ struct Nclist {
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, const Position_* start, const Position_* end) {
+    // We want to sort by increasing start but DECREASING end, so that the
+    // children sort after their parents. 
     std::sort(subset, subset + num_ranges, [&](Index_ l, Index_ r) -> bool {
         if (start[l] == start[r]) {
-            return end[l] < end[r];
+            return end[l] > end[r];
         } else {
             return start[l] < start[r];
         }
@@ -64,7 +67,7 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
     struct WorkingNode {
         WorkingNode() = default;
         WorkingNode(Index_ id) : id(id) {}
-        Index_ id = 0;
+        Index_ id = std::numeric_limits<Index_>::max(); // to avoid confusion when debugging.
         std::vector<Index_> children;
         std::vector<Index_> duplicates;
     };
@@ -161,12 +164,13 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
 
         auto working_child_index = output.nodes[current_output_index].children_start; // fetching it from the temporary store location, see above.
         const auto& working_node = working_contents[working_child_index];
-        output.nodes[current_output_index].children_start = output.nodes.size();
+        Index_ first_child = output.nodes.size();
+        output.nodes[current_output_index].children_start = first_child;
         deposit_children(working_node);
         output.nodes[current_output_index].children_end = output.nodes.size();
 
         if (!working_node.children.empty()) {
-            history.emplace_back(current_output_index, 0);
+            history.emplace_back(current_output_index, first_child);
         }
     }
 
