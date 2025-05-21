@@ -18,11 +18,13 @@ struct Nclist {
     // reference any interval; it is only included to enable convenient
     // traversal of the tree by moving through 'nodes'.
     struct Node {
+        Node() = default;
+        Node(Index_ id) : id(id) {}
         Index_ id = 0;
-        Index_ children_start = 0;
-        Index_ children_end = 0;
-        Index_ duplicates_start = 0;
-        Index_ duplicates_end = 0;
+        std::size_t children_start = 0;
+        std::size_t children_end = 0;
+        std::size_t duplicates_start = 0;
+        std::size_t duplicates_end = 0;
     };
     std::vector<Node> nodes; 
 
@@ -30,9 +32,8 @@ struct Nclist {
     // them in a separate vector for better cache locality in binary searches.
     std::vector<Position_> starts, ends;
 
-    // These are concatenations of all the individual 'children'/'duplicates'
-    // vectors, to improve cache locality during tree traversal.
-    std::vector<Index_> children;
+    // These are concatenations of all the individual 'duplicates' vectors, to
+    // improve cache locality during tree traversal.
     std::vector<Index_> duplicates;
 /**
  * @endcond
@@ -60,17 +61,17 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
         WorkingNode() = default;
         WorkingNode(Index_ id) : id(id) {}
         Index_ id = 0;
-        std::vector<Index_> children;
+        std::vector<std::size_t> children;
         std::vector<Index_> duplicates;
     };
-    std::vector<WorkingNode> contents;
-    contents.reserve(static_cast<std::size_t>(num_ranges) + 1);
-    contents.resize(1);
+    std::vector<WorkingNode> working_contents;
+    working_contents.reserve(static_cast<std::size_t>(num_ranges) + 1);
+    working_contents.resize(1);
 
     struct StackElement {
         StackElement() = default;
         StackElement(Index_ offset, Position_ end) : offset(offset), end(end) {}
-        Index_ offset;
+        std::size_t offset;
         Position_ end;
     };
     std::vector<StackElement> stack;
@@ -83,7 +84,7 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
 
         // Special handling of duplicate intervals.
         if (r && last_start == curstart && last_end == curend) {
-            contents[stack.back().offset].duplicates.push_back(curid);
+            working_contents[stack.back().offset].duplicates.push_back(curid);
             ++num_duplicates;
             continue;
         }
@@ -92,10 +93,10 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
             stack.pop_back();
         }
 		auto landing_offset = (stack.empty() ? static_cast<Index_>(0) : stack.back().offset);
-        auto& landing_node = contents[landing_offset]; 
+        auto& landing_node = working_contents[landing_offset]; 
 
-        Index_ used = contents.size();
-        contents.emplace_back(curid);
+        auto used = working_contents.size();
+        working_contents.emplace_back(curid);
         landing_node.children.push_back(used); 
         stack.emplace_back(used, curend);
         last_start = curstart;
@@ -105,19 +106,43 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
     // Depth-first traversal of the NCList tree, to convert it into a
     // contiguous structure for export. This should improve cache locality.
     Nclist<Index_, Position_> output;
-    output.nodes.resize(contents.size());
-    output.starts.resize(contents.size());
-    output.ends.resize(contents.size());
-    output.nodes[0].children_end = contents[0].children.size();
-    output.children.reserve(num_ranges - num_duplicates);
+    output.nodes.reserve(working_contents.size());
+    output.starts.reserve(working_contents.size());
+    output.ends.reserve(working_contents.size());
     output.duplicates.reserve(num_duplicates);
 
-    std::vector<std::pair<Index_, std::size_t> > history(1);
+    auto deposit_children = [&](Index_ tmp_node_index) -> void {
+        const auto& working_child_indices = working_contents[tmp_node_index].children;
+        for (auto work_index : working_child_indices) {
+            const auto& working_child_node = working_contents[work_index];
+            auto child_id = working_child_node.id;
+            output.starts.push_back(start[child_id]);
+            output.ends.push_back(end[child_id]);
+
+            output.nodes.emplace_back(child_id);
+            auto& output_child_node = output.nodes.back(); 
+
+            // We temporarily store the working index of the kid here, to allow
+            // us to cross-reference back into 'working_contents' later.
+            output_child_node.children_start = work_index;
+
+            if (!working_child_node.duplicates.empty()) {
+                output_child_node.duplicates_start = output.duplicates.size();
+                output.duplicates.insert(output.duplicates.end(), working_child_node.duplicates.begin(), working_child_node.duplicates.end());
+                output_child_node.duplicates_end = output.duplicates.size();
+            }
+        }
+    };
+    output.nodes.resize(1);
+    output.nodes[0].children_start = 1;
+    deposit_children(0);
+    output.nodes[0].children_end = output.nodes.size();
+
+    std::vector<std::pair<Index_, Index_> > history;
+    history.emplace_back(0, 1);
     while (1) {
         auto& current_state = history.back();
-        const auto& current_node = contents[current_state.first];
-
-        if (current_state.second == current_node.children.size()) {
+        if (current_state.second == output.nodes[current_state.first].children_end) {
             history.pop_back();
             if (history.empty()) {
                 break;
@@ -126,26 +151,15 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
             }
         }
 
-        auto chosen_child = current_node.children[current_state.second];
-        ++current_state.second; // increment this before we call emplace_back() on history, which might trigger an allocation.
+        auto current_output_index = current_state.second;
+        auto working_child_index = output.nodes[current_output_index].children_start;
+        output.nodes[current_output_index].children_start = output.nodes.size();
+        deposit_children(working_child_index);
+        output.nodes[current_output_index].children_end = output.nodes.size();
 
-        const auto& child_node = contents[chosen_child];
-        auto& child_node_out = output.nodes[chosen_child];
-        child_node_out.id = child_node.id;
-        output.starts[chosen_child] = start[child_node.id];
-        output.ends[chosen_child] = end[child_node.id];
-
-        if (!child_node.duplicates.empty()) {
-            child_node_out.duplicates_start = output.duplicates.size();
-            output.duplicates.insert(output.duplicates.end(), child_node.duplicates.begin(), child_node.duplicates.end());
-            child_node_out.duplicates_end = output.duplicates.size();
-        }
-
-        if (!child_node.children.empty()) {
-            child_node_out.children_start = output.children.size();
-            output.children.insert(output.children.end(), child_node.children.begin(), child_node.children.end());
-            child_node_out.children_end = output.children.size();
-            history.emplace_back(chosen_child, 0);
+        ++current_state.second; // do this before the emplace_back(), otherwise it might get reallocated.
+        if (!working_contents[working_child_index].children.empty()) {
+            history.emplace_back(current_output_index, 0);
         }
     }
 
