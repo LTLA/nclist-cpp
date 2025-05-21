@@ -14,17 +14,18 @@ struct Nclist {
 /**
  * @cond
  */
-    // First entry of 'nodes' refers to the root node of the tree and does not
-    // reference any interval; it is only included to enable convenient
-    // traversal of the tree by moving through 'nodes'.
+    Index_ root_children = 0;
+
+    // Length of 'nodes' and 'duplicates' must be less than the number of
+    // ranges, so we can use Index_ as the indexing type.
     struct Node {
         Node() = default;
         Node(Index_ id) : id(id) {}
         Index_ id = 0;
-        std::size_t children_start = 0;
-        std::size_t children_end = 0;
-        std::size_t duplicates_start = 0;
-        std::size_t duplicates_end = 0;
+        Index_ children_start = 0;
+        Index_ children_end = 0;
+        Index_ duplicates_start = 0;
+        Index_ duplicates_end = 0;
     };
     std::vector<Node> nodes; 
 
@@ -57,21 +58,24 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
     // We can't easily do that in C++ while still using std::vector, because
     // the type of the node is not yet complete when it references itself;
     // and I don't want to use a unique_ptr here.
+    // 
+    // Also note that all offsets can be represented as Index_ as they point
+    // into 'working_contents', which can be no longer than 'num_ranges'.
     struct WorkingNode {
         WorkingNode() = default;
         WorkingNode(Index_ id) : id(id) {}
         Index_ id = 0;
-        std::vector<std::size_t> children;
+        std::vector<Index_> children;
         std::vector<Index_> duplicates;
     };
+    WorkingNode top_level;
     std::vector<WorkingNode> working_contents;
-    working_contents.reserve(static_cast<std::size_t>(num_ranges) + 1);
-    working_contents.resize(1);
+    working_contents.reserve(num_ranges);
 
     struct StackElement {
         StackElement() = default;
         StackElement(Index_ offset, Position_ end) : offset(offset), end(end) {}
-        std::size_t offset;
+        Index_ offset;
         Position_ end;
     };
     std::vector<StackElement> stack;
@@ -92,8 +96,7 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
         while (!stack.empty() && stack.back().end < curend) {
             stack.pop_back();
         }
-		auto landing_offset = (stack.empty() ? static_cast<Index_>(0) : stack.back().offset);
-        auto& landing_node = working_contents[landing_offset]; 
+        auto& landing_node = (stack.empty() ? top_level : working_contents[stack.back().offset]); 
 
         auto used = working_contents.size();
         working_contents.emplace_back(curid);
@@ -111,8 +114,8 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
     output.ends.reserve(working_contents.size());
     output.duplicates.reserve(num_duplicates);
 
-    auto deposit_children = [&](Index_ tmp_node_index) -> void {
-        const auto& working_child_indices = working_contents[tmp_node_index].children;
+    auto deposit_children = [&](const WorkingNode& working_node) -> void {
+        const auto& working_child_indices = working_node.children;
         for (auto work_index : working_child_indices) {
             const auto& working_child_node = working_contents[work_index];
             auto child_id = working_child_node.id;
@@ -133,32 +136,40 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
             }
         }
     };
-    output.nodes.resize(1);
-    output.nodes[0].children_start = 1;
-    deposit_children(0);
-    output.nodes[0].children_end = output.nodes.size();
+    deposit_children(top_level);
+    output.root_children = output.nodes.size();
 
+    Index_ root_progress = 0;
     std::vector<std::pair<Index_, Index_> > history;
-    history.emplace_back(0, 1);
     while (1) {
-        auto& current_state = history.back();
-        if (current_state.second == output.nodes[current_state.first].children_end) {
-            history.pop_back();
-            if (history.empty()) {
+        Index_ current_output_index;
+        if (history.empty()) {
+            if (root_progress == output.root_children) {
                 break;
-            } else {
-                continue;
             }
+            current_output_index = root_progress;
+            ++root_progress;
+        } else {
+            auto& current_state = history.back();
+            if (current_state.second == output.nodes[current_state.first].children_end) {
+                history.pop_back();
+                if (history.empty()) {
+                    break;
+                } else {
+                    continue;
+                }
+            }
+            current_output_index = current_state.second;
+            ++(current_state.second); // do this before the emplace_back(), otherwise the history might get reallocated and the reference would be dangling.
         }
 
-        auto current_output_index = current_state.second;
-        auto working_child_index = output.nodes[current_output_index].children_start;
+        auto working_child_index = output.nodes[current_output_index].children_start; // fetching it from the temporary store location, see above.
+        const auto& working_node = working_contents[working_child_index];
         output.nodes[current_output_index].children_start = output.nodes.size();
-        deposit_children(working_child_index);
+        deposit_children(working_node);
         output.nodes[current_output_index].children_end = output.nodes.size();
 
-        ++current_state.second; // do this before the emplace_back(), otherwise it might get reallocated.
-        if (!working_contents[working_child_index].children.empty()) {
+        if (!working_node.children.empty()) {
             history.emplace_back(current_output_index, 0);
         }
     }
