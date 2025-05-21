@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <vector>
 #include <cstddef>
+#include <algorithm>
+#include <numeric>
 
 namespace nclist {
 
@@ -25,6 +27,8 @@ struct Nclist {
     };
     std::vector<Node> nodes; 
 
+    // These are concatenations of all the individual children/duplicates vectors,
+    // to improve cache locality during tree traversal.
     std::vector<Index_> children;
     std::vector<Index_> duplicates;
 /**
@@ -36,7 +40,7 @@ struct Nclist {
  * @cond
  */
 template<typename Index_, typename Position_>
-Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_* start, const Position_* end) {
+Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, const Position_* start, const Position_* end) {
     std::sort(subset, subset + num_ranges, [&](Index_ l, Index_ r) -> bool {
         if (start[l] == start[r]) {
             return end[l] < end[r];
@@ -50,6 +54,7 @@ Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_
     // the type of the node is not yet complete when it references itself;
     // and I don't want to use a unique_ptr here.
     struct WorkingNode {
+        WorkingNode() = default;
         WorkingNode(Index_ id) : id(id) {}
         Index_ id = 0;
         std::vector<Index_> children;
@@ -75,7 +80,7 @@ Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_
 
         // Special handling of duplicate intervals.
         if (r && last_start == curstart && last_end == curend) {
-            landing_node.duplicates.push_back(curid);
+            contents[stack.back().offset].duplicates.push_back(curid);
             ++num_duplicates;
             continue;
         }
@@ -84,7 +89,7 @@ Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_
             stack.pop_back();
         }
 		auto landing_offset = (stack.empty() ? static_cast<Index_>(0) : stack.back().offset);
-        auto& landing_node = output.contents[landing_offset]; 
+        auto& landing_node = contents[landing_offset]; 
 
         Index_ used = contents.size();
         contents.emplace_back(curid);
@@ -140,8 +145,8 @@ Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_
         if (!child_node.children.empty()) {
             child_node_out.children_start = output.children.size();
             output.children.insert(output.children.end(), child_node.children.begin(), child_node.children.end());
-            child_nod_out.children_end = output.children.size();
-            history.emplace_back(chosen, 0);
+            child_node_out.children_end = output.children.size();
+            history.emplace_back(chosen_child, 0);
         }
     }
 
@@ -151,12 +156,14 @@ Nclist<Index_> build_internal(Index_ num_ranges, Index_* subset, const Position_
  * @endcond
  */
 
-Nclist<Index_> build(Index_ num_ranges, const Index_* subset, const Position_* start, const Position_* end) {
+template<typename Index_, typename Position_>
+Nclist<Index_, Position_> build(Index_ num_ranges, const Index_* subset, const Position_* start, const Position_* end) {
     std::vector<Index_> copy(subset, subset + num_ranges);
     return build_internal(num_ranges, copy.data(), start, end);
 }
 
-Nclist<Index_> build(Index_ num_ranges, const Position_* start, const Position_* end) {
+template<typename Index_, typename Position_>
+Nclist<Index_, Position_> build(Index_ num_ranges, const Position_* start, const Position_* end) {
     std::vector<Index_> copy(num_ranges);
     std::iota(copy.begin(), copy.end(), static_cast<Index_>(0));
     return build_internal(num_ranges, copy.data(), start, end);
