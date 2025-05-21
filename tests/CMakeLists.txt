@@ -24,7 +24,7 @@ include(GoogleTest)
 
 add_executable(
     libtest
-    src/nclist.cpp
+    src/overlaps_any.cpp
 )
 
 target_link_libraries(
