@@ -17,8 +17,9 @@ struct OverlapsAnyWorkspace {
      */
     struct State {
         State() = default;
-        State(Index_ cat, Index_ cend) : child_at(cat), child_end(cend) {}
+        State(Index_ cat, Index_ cend, bool skip) : child_at(cat), child_end(cend), skip_search(skip) {}
         Index_ child_at = 0, child_end = 0;
+        bool skip_search = false;
     };
     std::vector<State> history;
     /**
@@ -36,6 +37,9 @@ struct OverlapsAnyParameters {
 /**
  * @cond
  */
+// We template by overlap mode for compile-time distinction between the
+// different choices, somewhat for efficiency but also to allow us to do
+// compile-time checks for invalid operations that span multiple modes.
 enum class OverlapsAnyMode : char { BASIC, MIN_OVERLAP, MAX_GAP };
 
 template<OverlapsAnyMode mode_, typename Index_, typename Position_>
@@ -57,26 +61,29 @@ void overlaps_any_internal(
         }
     }
 
-    auto is_finished = [&](Position_ index_start) -> bool {
+    // If an subject interval doesn't satisfy these requirements, none of its
+    // children will either, so we can safely declare that iteration is
+    // finished. This allows us to skip a section of the NCList.
+    auto is_finished = [&](Position_ subject_start) -> bool {
         if constexpr(mode_ == OverlapsAnyMode::MAX_GAP) {
-            if (index_start < query_end) {
+            if (subject_start < query_end) {
                 return false;
             }
-            return index_start - query_end > *(params.max_gap); // not >=, as a gap-extended end is inclusive to the starts.
+            return subject_start - query_end > *(params.max_gap); // not >=, as a gap-extended end is inclusive to the starts.
         } else if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
-            if (index_start >= query_end) {
+            if (subject_start >= query_end) {
                 return true;
             }
-            return query_end - index_start < params.min_overlap;
+            return query_end - subject_start < params.min_overlap;
         } else {
-            return index_start >= query_end;
+            return subject_start >= query_end;
         }
     };
 
     typename std::conditional<mode_ == OverlapsAnyMode::BASIC, const char*, Position_>::type effective_query_start; // make sure compiler complains if we use this in basic mode.
     if constexpr(mode_ == OverlapsAnyMode::MAX_GAP) {
         // When a max gap is specified, we push the query start to the left
-        // so as to capture index intervals within the specified gap range.
+        // so as to capture subject intervals within the specified gap range.
         if (std::is_unsigned<Position_>::value && query_start < *(params.max_gap)) {
             effective_query_start = 0;
         } else {
@@ -84,7 +91,7 @@ void overlaps_any_internal(
         }
     } else if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
         // When a minimum overlap is specified, we push the query start to the right
-        // so as to exclude index intervals that end before the overlap is satisfied.
+        // so as to exclude subject intervals that end before the overlap is satisfied.
         constexpr Position_ maxed = std::numeric_limits<Position_>::max();
         if (maxed - params.min_overlap < query_start) {
             // No point continuing as nothing will be found in the binary search.
@@ -94,16 +101,16 @@ void overlaps_any_internal(
         }
     }
 
-    // We add a function to check if the first index end precedes the
-    // (effective) query start, and to skip the binary search if so. This is
-    // often true when traversing through nested children, as if the parent
-    // skips, many of its children will also skip; so it's worth spending a
-    // dedicated statement to check if we can omit the binary search.
-    auto precedes_query = [&](Position_ index_end) -> bool {
+    // The logic is that, if a subject interval is enveloped by a query interval,
+    // the binary search is unnecessary as we always have to start at the first child
+    // (as subject_end >= subject_start >(=) query_start). Not only that, but
+    // the binary search can also be skipped for all of the grandchildren's
+    // children, which must necessarily start at or after the child.
+    auto is_query_preceding = [&](Position_ subject_start) -> bool {
         if constexpr(mode_ == OverlapsAnyMode::BASIC) {
-            return index_end <= query_start;
+            return subject_start > query_start;
         } else {
-            return index_end < effective_query_start;
+            return subject_start >= effective_query_start;
         }
     };
 
@@ -113,7 +120,7 @@ void overlaps_any_internal(
         auto eend = ebegin + children_end;
         if constexpr(mode_ == OverlapsAnyMode::BASIC) {
             // We use an upper bound as the interval ends are assumed to be non-inclusive,
-            // so we want the first index end that is greater than the query_start.
+            // so we want the first subject end that is greater than the query_start.
             return std::upper_bound(estart, eend, query_start) - ebegin;
         } else {
             // For gapped searches, we use a lower bound as the gap-subtracted
@@ -122,25 +129,28 @@ void overlaps_any_internal(
             // will be considered as overlapping that interval.
             // 
             // For minimum overlap searches, the overlap-added start represents
-            // the earliest index end that satisfies the overlap. Now that
+            // the earliest subject end that satisfies the overlap. Now that
             // we're comparing ends to ends, we can use a lower bound.
             return std::lower_bound(estart, eend, effective_query_start) - ebegin;
         }
     };
 
     Index_ root_child_at = 0;
-    if (precedes_query(index.ends[0])) {
+    bool root_skip_search = is_query_preceding(index.starts[0]);
+    if (!root_skip_search) {
         root_child_at = find_first_child(0, index.root_children);
     }
 
     workspace.history.clear();
     while (1) {
         Index_ current_index;
+        bool skip_search;
         if (workspace.history.empty()) {
             if (root_child_at == index.root_children || is_finished(index.starts[root_child_at])) {
                 break;
             }
             current_index = root_child_at;
+            skip_search = root_skip_search;
             ++root_child_at;
         } else {
             auto& current_state = workspace.history.back();
@@ -149,6 +159,7 @@ void overlaps_any_internal(
                 continue;
             }
             current_index = current_state.child_at;
+            skip_search = current_state.skip_search;
             ++(current_state.child_at); // do this before the emplace_back(), otherwise the history might get reallocated and the reference would be dangling.
         }
 
@@ -169,15 +180,13 @@ void overlaps_any_internal(
         }
 
         if (current_node.children_start != current_node.children_end) {
-            if (precedes_query(index.ends[current_node.children_start])) {
-                // +1 to skip the first as we already know it's before our query_start.
-                Index_ start_pos = find_first_child(current_node.children_start + 1, current_node.children_end);
-                if (start_pos != current_node.children_end) {
-                    workspace.history.emplace_back(start_pos, current_node.children_end);
-                }
+            if (skip_search) {
+                workspace.history.emplace_back(current_node.children_start, current_node.children_end, true);
             } else {
-                // Skip the binary search.
-                workspace.history.emplace_back(current_node.children_start, current_node.children_end);
+                Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
+                if (start_pos != current_node.children_end) {
+                    workspace.history.emplace_back(start_pos, current_node.children_end, is_query_preceding(index.starts[start_pos]));
+                }
             }
         }
     }
