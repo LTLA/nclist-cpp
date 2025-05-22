@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <random>
+#include <cstddef>
 
 #include "nclist/overlaps_any.hpp"
 #include "utils.hpp"
@@ -235,6 +236,8 @@ TEST(OverlapsAny, SimpleNested) {
     }
 }
 
+/********************************************************************/
+
 class OverlapsAnyTestCore {
 protected:
     int nquery, nsubject;
@@ -380,3 +383,88 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
+/********************************************************************/
+
+TEST(OverlapsAny, Unsigned) {
+    std::vector<unsigned> test_starts { 200, 300, 100, 500 };
+    std::vector<unsigned> test_ends { 280, 320, 170, 510 };
+
+    auto index = nclist::build<std::size_t, unsigned>(test_starts.size(), test_starts.data(), test_ends.data());
+    nclist::OverlapsAnyWorkspace<std::size_t> workspace;
+    std::vector<std::size_t> output;
+
+    {
+        nclist::overlaps_any(index, 50u, 80u, nclist::OverlapsAnyParameters<unsigned>(), workspace, output);
+        EXPECT_TRUE(output.empty());
+    }
+
+    {
+        nclist::overlaps_any(index, 150u, 200u, nclist::OverlapsAnyParameters<unsigned>(), workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 2);
+    }
+
+    {
+        nclist::overlaps_any(index, 150u, 300u, nclist::OverlapsAnyParameters<unsigned>(), workspace, output);
+        ASSERT_EQ(output.size(), 2);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 2);
+    }
+
+    {
+        nclist::overlaps_any(index, 210u, 310u, nclist::OverlapsAnyParameters<unsigned>(), workspace, output);
+        ASSERT_EQ(output.size(), 2);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+    }
+
+    // Behaves with a max gap.
+    {
+        nclist::OverlapsAnyParameters<unsigned> params;
+        params.max_gap = 100; // check that we avoid underflow when defining the search start.
+        nclist::overlaps_any(index, 90u, 200u, params, workspace, output);
+        ASSERT_EQ(output.size(), 3);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+        EXPECT_EQ(output[2], 2);
+    }
+}
+
+TEST(OverlapsAny, Double) {
+    std::vector<double> test_starts { 200.5, 300.1, 100.8, 500.5 };
+    std::vector<double> test_ends { 280.2, 320.9, 170.1, 510.5 };
+
+    auto index = nclist::build<int, double>(test_starts.size(), test_starts.data(), test_ends.data());
+    nclist::OverlapsAnyWorkspace<int> workspace;
+    std::vector<int> output;
+
+    {
+        nclist::overlaps_any(index, 50.0, 80.0, nclist::OverlapsAnyParameters<double>(), workspace, output);
+        EXPECT_TRUE(output.empty());
+    }
+
+    {
+        nclist::overlaps_any(index, 150.0, 200.5, nclist::OverlapsAnyParameters<double>(), workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 2);
+    }
+
+    {
+        nclist::overlaps_any(index, 150.0, 250.0, nclist::OverlapsAnyParameters<double>(), workspace, output);
+        ASSERT_EQ(output.size(), 2);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 2);
+    }
+
+    {
+        nclist::overlaps_any(index, 170.1, 320.0, nclist::OverlapsAnyParameters<double>(), workspace, output);
+        ASSERT_EQ(output.size(), 2);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+    }
+}
