@@ -36,7 +36,9 @@ struct OverlapsAnyParameters {
 /**
  * @cond
  */
-template<bool gapped_, typename Index_, typename Position_>
+enum class OverlapsAnyMode : char { BASIC, MIN_OVERLAP, MAX_GAP };
+
+template<OverlapsAnyMode mode_, typename Index_, typename Position_>
 void overlaps_any_internal(
     const Nclist<Index_, Position_>& index,
     Position_ query_start,
@@ -49,42 +51,59 @@ void overlaps_any_internal(
     if (index.root_children == 0) {
         return;
     }
-    if constexpr(!gapped_) {
-        if (params.min_overlap > 0 && query_end - query_start < params.min_overlap) {
+    if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+        if (query_end - query_start < params.min_overlap) {
             return;
         }
     }
 
     auto is_finished = [&](Position_ index_start) -> bool {
-        if constexpr(!gapped_) {
-            return index_start >= query_end;
-        } else {
+        if constexpr(mode_ == OverlapsAnyMode::MAX_GAP) {
             if (index_start < query_end) {
                 return false;
             }
-            return index_start - query_end > params.max_gap; // not >=, as a gap-extended end is inclusive to the starts.
+            return index_start - query_end > *(params.max_gap); // not >=, as a gap-extended end is inclusive to the starts.
+        } else if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+            if (index_start >= query_end) {
+                return true;
+            }
+            return query_end - index_start < params.min_overlap;
+        } else {
+            return index_start >= query_end;
         }
     };
 
-    auto gapped_query_start = [&]{
-        if constexpr(!gapped_) {
-            return static_cast<char*>(NULL); // return a NULL pointer to make sure it's never used.
-        } else if (std::is_unsigned<Position_>::value && query_start < *(params.max_gap)) {
-            return static_cast<Position_>(0);
+    typename std::conditional<mode_ == OverlapsAnyMode::BASIC, const char*, Position_>::type effective_query_start; // make sure compiler complains if we use this in basic mode.
+    if constexpr(mode_ == OverlapsAnyMode::MAX_GAP) {
+        // When a max gap is specified, we push the query start to the left
+        // so as to capture index intervals within the specified gap range.
+        if (std::is_unsigned<Position_>::value && query_start < *(params.max_gap)) {
+            effective_query_start = 0;
         } else {
-            return query_start - *(params.max_gap);
+            effective_query_start = query_start - *(params.max_gap);
         }
-    }();
+    } else if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+        // When a minimum overlap is specified, we push the query start to the right
+        // so as to exclude index intervals that end before the overlap is satisfied.
+        constexpr Position_ maxed = std::numeric_limits<Position_>::max();
+        if (maxed - params.min_overlap < query_start) {
+            // No point continuing as nothing will be found in the binary search.
+            return;
+        } else {
+            effective_query_start = query_start + params.min_overlap;
+        }
+    }
 
     // We add a function to check if the first index end precedes the
     // (effective) query start, and to skip the binary search if so. This is
-    // often true when traversing through nested children; if the parent
-    // skips, many of its children will also skip.
+    // often true when traversing through nested children, as if the parent
+    // skips, many of its children will also skip; so it's worth spending a
+    // dedicated statement to check if we can omit the binary search.
     auto precedes_query = [&](Position_ index_end) -> bool {
-        if constexpr(!gapped_) {
+        if constexpr(mode_ == OverlapsAnyMode::BASIC) {
             return index_end <= query_start;
         } else {
-            return index_end < gapped_query_start;
+            return index_end < effective_query_start;
         }
     };
 
@@ -92,15 +111,20 @@ void overlaps_any_internal(
         auto ebegin = index.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
-        if constexpr(!gapped_) {
+        if constexpr(mode_ == OverlapsAnyMode::BASIC) {
             // We use an upper bound as the interval ends are assumed to be non-inclusive,
             // so we want the first index end that is greater than the query_start.
             return std::upper_bound(estart, eend, query_start) - ebegin;
         } else {
-            // Now use a lower bound as the gap-subtracted start is inclusive with the interval ends.
-            // Consider a gap of zero; this means that a query that is exactly contiguous with a 
-            // subject interval will be considered as overlapping that interval.
-            return std::lower_bound(estart, eend, gapped_query_start) - ebegin;
+            // For gapped searches, we use a lower bound as the gap-subtracted
+            // start is inclusive with the interval ends. Consider a gap of
+            // zero; a query that is exactly contiguous with a subject interval
+            // will be considered as overlapping that interval.
+            // 
+            // For minimum overlap searches, the overlap-added start represents
+            // the earliest index end that satisfies the overlap. Now that
+            // we're comparing ends to ends, we can use a lower bound.
+            return std::lower_bound(estart, eend, effective_query_start) - ebegin;
         }
     };
 
@@ -129,12 +153,10 @@ void overlaps_any_internal(
         }
 
         const auto& current_node = index.nodes[current_index];
-        if constexpr(!gapped_) {
-            if (params.min_overlap > 0) {
-                if (std::min(query_end, index.ends[current_index]) - std::max(query_start, index.starts[current_index]) < params.min_overlap) {
-                    // No point continuing with the children, as all children will by definition have smaller overlaps and cannot satisfy 'min_overlap'.
-                    continue;
-                }
+        if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+            if (std::min(query_end, index.ends[current_index]) - std::max(query_start, index.starts[current_index]) < params.min_overlap) {
+                // No point continuing with the children, as all children will by definition have smaller overlaps and cannot satisfy 'min_overlap'.
+                continue;
             }
         }
 
@@ -174,9 +196,11 @@ void overlaps_any(
     std::vector<Index_>& matches)
 {
     if (params.max_gap.has_value()) {
-        overlaps_any_internal<true>(index, query_start, query_end, params, workspace, matches);
+        overlaps_any_internal<OverlapsAnyMode::MAX_GAP>(index, query_start, query_end, params, workspace, matches);
+    } else if (params.min_overlap) {
+        overlaps_any_internal<OverlapsAnyMode::MIN_OVERLAP>(index, query_start, query_end, params, workspace, matches);
     } else {
-        overlaps_any_internal<false>(index, query_start, query_end, params, workspace, matches);
+        overlaps_any_internal<OverlapsAnyMode::BASIC>(index, query_start, query_end, params, workspace, matches);
     }
 }
 

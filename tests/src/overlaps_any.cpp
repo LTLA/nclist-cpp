@@ -431,6 +431,14 @@ TEST(OverlapsAny, Unsigned) {
         EXPECT_EQ(output[1], 1);
         EXPECT_EQ(output[2], 2);
     }
+
+    // Behaves with a minimum overlap.
+    {
+        nclist::OverlapsAnyParameters<unsigned> params;
+        params.min_overlap = std::numeric_limits<unsigned>::max(); // check that we return early if a huge overlap is specified.
+        nclist::overlaps_any(index, 90u, 200u, params, workspace, output);
+        EXPECT_TRUE(output.empty());
+    }
 }
 
 TEST(OverlapsAny, Double) {
