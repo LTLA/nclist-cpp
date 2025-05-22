@@ -48,31 +48,29 @@ void overlaps_within(
     }
 
     // This is the only place that we need to consider the min_overlap; if an
-    // index interval envelops the query, it should be at least as wide, so
+    // subject interval envelops the query, it should be at least as wide, so
     // will automatically satisfy min_overlap. 
     if (params.min_overlap > 0 && query_end - query_start < params.min_overlap) {
         return;
     }
 
-    // If an index interval doesn't satisfy these requirements, none of its
+    // If a subject interval doesn't satisfy these requirements, none of its
     // children will either, so we can safely declare that iteration as being
-    // finished. Don't check if abs(query_start - index_start) < max_gap, as a
-    // parent could fail this while its child could satisfy it.
-    auto is_finished = [&](Position_ index_start) -> bool {
-        return index_start > query_start; 
+    // finished. Don't check the max_gap constraints here, as parent could fail
+    // this while its child could satisfy it.
+    auto is_finished = [&](Position_ subject_start) -> bool {
+        return subject_start > query_start; 
     };
 
+    // We start from the first subject interval that finishes at or after the query. 
     auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
         auto ebegin = index.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
-        return std::upper_bound(estart, eend, query_end) - ebegin;
+        return std::lower_bound(estart, eend, query_end) - ebegin;
     };
 
-    Index_ root_child_at = 0;
-    if (precedes_query(index.starts[0])) {
-        root_child_at = find_first_child(0, index.root_children);
-    }
+    Index_ root_child_at = find_first_child(0, index.root_children);
 
     Position_ query_width = query_end - query_start;
     workspace.history.clear();
@@ -96,12 +94,12 @@ void overlaps_within(
 
         const auto& current_node = index.nodes[current_index];
 
-        // If max_gap is violated, we don't bother to add the current index interval,
+        // If max_gap is violated, we don't bother to add the current subject interval,
         // but the children could be okay so we proceed to the next level of the NClist.
         bool add_self = true;
         if (params.max_gap.has_value()) {
-            auto index_width = index.ends[current_index] - index.starts[current_index];
-            if (index_width - query_width > *(params.max_gap)) {
+            auto subject_width = index.ends[current_index] - index.starts[current_index];
+            if (subject_width - query_width > *(params.max_gap)) {
                 add_self = false;
             }
         }
@@ -117,7 +115,6 @@ void overlaps_within(
         }
 
         if (current_node.children_start != current_node.children_end) {
-            // Unlike overlaps_any(), we 
             Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
             if (start_pos != current_node.children_end) {
                 workspace.history.emplace_back(start_pos, current_node.children_end);
