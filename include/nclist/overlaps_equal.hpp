@@ -54,24 +54,34 @@ void overlaps_equal(
     }
 
     // If an subject interval doesn't satisfy these requirements, none of its
-    // children will either, so we can safely declare that iteration is
-    // finished. This allows us to skip a section of the NCList.
+    // children or younger siblings will either, so we can safely declare that
+    // iteration is finished. This allows us to skip a section of the NCList.
     auto is_finished = [&](Position_ subject_start) -> bool {
         if (subject_start > query_start) {
             if (params.max_gap.has_value()) {
-                return subject_start - query_start > *(params.max_gap);
+                if (subject_start - query_start > *(params.max_gap)) {
+                    return true;
+                }
             } else {
                 return true;
+            }
+
+            if (params.min_overlap > 0) {
+                if (subject_start >= query_end || query_end - subject_start < params.min_overlap) {
+                    return true;
+                }
             }
         } else {
             if (params.min_overlap > 0) {
                 // if query_start >= subject_start, then query_end >=
                 // subject_start as well, so the LHS will be non-negative.
-                return query_end - subject_start < params.min_overlap;
-            } else {
-                return false;
+                if (query_end - subject_start < params.min_overlap) {
+                    return true;
+                }
             }
         }
+
+        return false;
     };
 
     Position_ effective_query_end = query_end;
@@ -141,7 +151,7 @@ void overlaps_equal(
             if (current_node.duplicates_start != current_node.duplicates_end) {
                 matches.insert(matches.end(), index.duplicates.begin() + current_node.duplicates_start, index.duplicates.begin() + current_node.duplicates_end);
             }
-            if (is_simple) { // no need to continue, there is only one node that is exactly equal.
+            if (is_simple) { // no need to continue traversal, there should only be one node that is exactly equal.
                 return;
             }
         }
