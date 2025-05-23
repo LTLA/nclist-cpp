@@ -1,5 +1,5 @@
-#ifndef NCLIST_OVERLAPS_ANY_HPP
-#define NCLIST_OVERLAPS_ANY_HPP
+#ifndef NCLIST_OVERLAPS_WITHIN_HPP
+#define NCLIST_OVERLAPS_WITHIN_HPP
 
 #include <vector>
 #include <algorithm>

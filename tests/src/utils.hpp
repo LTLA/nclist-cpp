@@ -4,6 +4,39 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_set>
+#include <random>
+
+class OverlapsTestCore {
+protected:
+    int nquery, nsubject;
+    std::vector<int> query_start, query_end;
+    std::vector<int> subject_start, subject_end;
+
+    template<typename Parameters_>
+    void assemble(const Parameters_& params) {
+        nquery = std::get<0>(params);
+        nsubject = std::get<1>(params);
+        std::mt19937_64 rng(nquery * 13 + nsubject);
+
+        query_start.reserve(nquery);
+        query_end.reserve(nquery);
+        for (int q = 0; q < nquery; ++q) {
+            int qstart = rng() % 1000 - 500;
+            int qwidth = rng() % 50 + 1;
+            query_start.push_back(qstart);
+            query_end.push_back(qstart + qwidth);
+        }
+
+        subject_start.reserve(nsubject);
+        subject_end.reserve(nsubject);
+        for (int q = 0; q < nsubject; ++q) {
+            int sstart = rng() % 1000 - 500;
+            int swidth = rng() % 50 + 1;
+            subject_start.push_back(sstart);
+            subject_end.push_back(sstart + swidth);
+        }
+    }
+};
 
 template<typename Index_, typename Position_>
 void reference_search(
