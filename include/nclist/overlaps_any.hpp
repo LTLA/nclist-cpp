@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <optional>
+#include <limits>
 
 #include "build.hpp"
 

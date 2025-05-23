@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <algorithm>
-#include <type_traits>
 #include <optional>
 
 #include "build.hpp"

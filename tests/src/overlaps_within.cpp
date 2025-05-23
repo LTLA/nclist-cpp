@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <random>
-#include <cstddef>
+#include <algorithm>
 
 #include "nclist/overlaps_within.hpp"
 #include "nclist/overlaps_any.hpp"
@@ -240,7 +240,7 @@ TEST_P(OverlapsWithinMinOverlapTest, Basic) {
             continue;
         }
 
-        nclist::overlaps_within(index, qstart, qend, params, work, default_results);
+        nclist::overlaps_within(index, qstart, qend, default_params, work, default_results);
         std::sort(results.begin(), results.end());
         std::sort(default_results.begin(), default_results.end());
         EXPECT_EQ(results, default_results);
