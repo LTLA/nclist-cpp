@@ -26,6 +26,7 @@ add_executable(
     libtest
     src/overlaps_any.cpp
     src/overlaps_within.cpp
+    src/overlaps_extend.cpp
 )
 
 target_link_libraries(
