@@ -139,7 +139,9 @@ void overlaps_equal(
                 }
             }
             if (params.max_gap.has_value()) {
-                okay = diff_above_gap(query_start, subject_start, *(params.max_gap)) || diff_above_gap(query_end, subject_end, *(params.max_gap));
+                okay = !diff_above_gap(query_start, subject_start, *(params.max_gap)) && !diff_above_gap(query_end, subject_end, *(params.max_gap));
+            } else {
+                okay = (subject_start == query_start && subject_end == query_end);
             }
         }
 
