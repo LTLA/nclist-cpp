@@ -27,6 +27,7 @@ add_executable(
     src/overlaps_any.cpp
     src/overlaps_within.cpp
     src/overlaps_extend.cpp
+    src/overlaps_equal.cpp
 )
 
 target_link_libraries(

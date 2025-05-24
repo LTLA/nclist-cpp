@@ -3,11 +3,11 @@
 
 #include <vector>
 #include <algorithm>
-#include <type_traits>
 #include <optional>
 #include <limits>
 
 #include "build.hpp"
+#include "utils.hpp"
 
 namespace nclist {
 
@@ -85,11 +85,7 @@ void overlaps_any_internal(
     if constexpr(mode_ == OverlapsAnyMode::MAX_GAP) {
         // When a max gap is specified, we push the query start to the left
         // so as to capture subject intervals within the specified gap range.
-        if (std::is_unsigned<Position_>::value && query_start < *(params.max_gap)) {
-            effective_query_start = 0;
-        } else {
-            effective_query_start = query_start - *(params.max_gap);
-        }
+        effective_query_start = safe_subtract_gap(query_start, *(params.max_gap));
     } else if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
         // When a minimum overlap is specified, we push the query start to the right
         // so as to exclude subject intervals that end before the overlap is satisfied.
@@ -102,7 +98,7 @@ void overlaps_any_internal(
         }
     }
 
-    // The logic is that, if a subject interval is enveloped by a query interval,
+    // The logic is that, if a query start precedes the subject start,
     // the binary search is unnecessary as we always have to start at the first child
     // (as subject_end >= subject_start >(=) query_start). Not only that, but
     // the binary search can also be skipped for all of the grandchildren's
