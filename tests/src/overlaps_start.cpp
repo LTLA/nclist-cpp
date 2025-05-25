@@ -194,3 +194,130 @@ TEST(OverlapsStart, MaxGapAndMinOverlap) {
     EXPECT_EQ(output[0], 4);
 }
 
+/********************************************************************/
+
+class OverlapsStartRandomizedTest : public OverlapsTestCore, public ::testing::TestWithParam<std::tuple<int, int, int, int> > {
+protected:
+    int min_overlap, max_gap;
+    void SetUp() {
+        auto params = GetParam();
+        assemble(params);
+        min_overlap = std::get<2>(params);
+        max_gap = std::get<3>(params);
+    }
+};
+
+TEST_P(OverlapsStartRandomizedTest, Basic) {
+    auto index = nclist::build(nsubject, subject_start.data(), subject_end.data());
+
+    nclist::OverlapsAnyWorkspace<int> a_work;
+    nclist::OverlapsAnyParameters<int> a_params;
+    std::vector<int> filtered;
+
+    nclist::OverlapsStartWorkspace<int> w_work;
+    nclist::OverlapsStartParameters<int> w_params;
+    w_params.min_overlap = min_overlap;
+    w_params.max_gap = max_gap;
+    std::vector<int> results;
+
+    for (int q = 0; q < nquery; ++q) {
+        auto qstart = query_start[q];
+        auto qend = query_end[q];
+
+        nclist::overlaps_any(index, qstart - max_gap, qend + max_gap, a_params, a_work, results);
+        filtered.clear();
+        for (auto r : results) {
+            if (min_overlap > 0) {
+                if (std::min(qend, subject_end[r]) - std::max(qstart, subject_start[r]) < min_overlap) {
+                    continue;
+                }
+            }
+            if (max_gap > 0) {
+                if (std::abs(qstart - subject_start[r]) > max_gap) {
+                    continue;
+                } 
+            } else {
+                if (qstart != subject_start[r]) {
+                    continue;
+                }
+            }
+            filtered.push_back(r);
+        }
+        std::sort(filtered.begin(), filtered.end());
+
+        nclist::overlaps_start(index, query_start[q], query_end[q], w_params, w_work, results);
+        std::sort(results.begin(), results.end());
+        EXPECT_EQ(results, filtered);
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    OverlapsStart,
+    OverlapsStartRandomizedTest,
+    ::testing::Combine(
+        ::testing::Values(10, 100, 1000), // num of query ranges
+        ::testing::Values(10, 100, 1000), // number of subject ranges
+        ::testing::Values(0, 5, 10, 20), // min overlap
+        ::testing::Values(0, 5, 10, 20) // max gap 
+    )
+);
+
+/********************************************************************/
+
+TEST(OverlapsStart, Unsigned) {
+    std::vector<unsigned> test_starts { 200, 300, 100, 500 };
+    std::vector<unsigned> test_ends { 280, 320, 170, 510 };
+    auto index = nclist::build<std::size_t, unsigned>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::OverlapsStartParameters<unsigned> params;
+    nclist::OverlapsStartWorkspace<std::size_t> workspace;
+    std::vector<std::size_t> output;
+
+    nclist::overlaps_start(index, 200u, 300u, nclist::OverlapsStartParameters<unsigned>(), workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
+
+    nclist::overlaps_start(index, 100u, 400u, nclist::OverlapsStartParameters<unsigned>(), workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 2);
+
+    // Behaves with a max gap.
+    params.max_gap = 60; // check that we avoid underflow when defining the search start.
+    nclist::overlaps_start(index, 50u, 200u, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 2);
+
+    // Check that we return early if a huge overlap is specified.
+    params.min_overlap = std::numeric_limits<unsigned>::max();
+    nclist::overlaps_start(index, 100u, 170u, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}
+
+TEST(OverlapsStart, Double) {
+    std::vector<double> test_starts { 200.5, 300.1, 100.8, 500.5 };
+    std::vector<double> test_ends { 280.2, 320.9, 170.1, 510.5 };
+    auto index = nclist::build<int, double>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::OverlapsStartParameters<double> params;
+    nclist::OverlapsStartWorkspace<int> workspace;
+    std::vector<int> output;
+
+    nclist::overlaps_start(index, 100.8, 990.1, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 2);
+
+    nclist::overlaps_start(index, 101.0, 180.0, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+    params.max_gap = 0.5;
+    nclist::overlaps_start(index, 101.0, 190.0, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 2);
+
+    params.max_gap = 0;
+    nclist::overlaps_start(index, 500.5, 520.5, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 3);
+    params.min_overlap = 10.5;
+    nclist::overlaps_start(index, 500.5, 520.5, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}
