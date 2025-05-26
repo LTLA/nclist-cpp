@@ -500,3 +500,37 @@ TEST(OverlapsAny, EarlyQuit) {
     nclist::overlaps_any(index, 0, 50, params, workspace, output);
     EXPECT_TRUE(output.empty());
 }
+
+TEST(OverlapsAny, ZeroWidth) {
+    std::vector<int> test_starts { 200, 400 };
+    std::vector<int> test_ends { 200, 500 };
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::OverlapsAnyWorkspace<int> workspace;
+    nclist::OverlapsAnyParameters<int> params;
+    std::vector<int> output;
+
+    // Zero-length ranges don't overlap when they're contiguous. 
+    nclist::overlaps_any(index, 200, 300, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+    nclist::overlaps_any(index, 500, 500, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+
+    // By extension, this means that zero-length ranges don't even overlap with themselves.
+    // An overlap is defined when subject_start < query_end and query_start < subject_end, because ends are non-inclusive.
+    nclist::overlaps_any(index, 200, 200, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+
+    // Unless max gap is satisfied.
+    params.max_gap = 0;
+    nclist::overlaps_any(index, 200, 300, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
+    nclist::overlaps_any(index, 500, 500, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 1);
+
+    nclist::overlaps_any(index, 200, 200, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
+}

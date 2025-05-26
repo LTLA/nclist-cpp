@@ -391,3 +391,31 @@ TEST(OverlapsWithin, EarlyQuit) {
     nclist::overlaps_within(index, 40, 100, params, workspace, output);
     EXPECT_TRUE(output.empty());
 }
+
+TEST(OverlapsWithin, ZeroWidth) {
+    std::vector<int> test_starts { 200, 400 };
+    std::vector<int> test_ends { 200, 500 };
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::OverlapsWithinWorkspace<int> workspace;
+    nclist::OverlapsWithinParameters<int> params;
+    std::vector<int> output;
+
+    nclist::overlaps_within(index, 300, 300, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+    nclist::overlaps_within(index, 450, 450, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 1);
+    nclist::overlaps_within(index, 500, 500, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+
+    // A zero-length range doesn't overlap itself, how can it even within itself?
+    // Consider a query [qs, qe) and a subject [qe, se), where the former obviously doesn't lie within the latter;
+    // this conclusion should not change as qs approaches qe.
+    nclist::overlaps_within(index, 200, 200, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+
+    params.min_overlap = 10;
+    nclist::overlaps_within(index, 450, 450, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}

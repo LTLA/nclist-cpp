@@ -49,7 +49,8 @@ void overlaps_within(
     // This is the only place that we need to consider the min_overlap; if an
     // subject interval envelops the query, it should be at least as wide, so
     // will automatically satisfy min_overlap. 
-    if (params.min_overlap > 0 && query_end - query_start < params.min_overlap) {
+    Position_ query_width = query_end - query_start;
+    if (params.min_overlap > 0 && query_width < params.min_overlap) {
         return;
     }
 
@@ -58,7 +59,7 @@ void overlaps_within(
     // finished. Don't check the max_gap constraints here, as parent could fail
     // this while its child could satisfy it.
     auto is_finished = [&](Position_ subject_start) -> bool {
-        return subject_start > query_start; 
+        return subject_start > query_start;
     };
 
     // We start from the first subject interval that finishes at or after the query. 
@@ -66,12 +67,16 @@ void overlaps_within(
         auto ebegin = index.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
-        return std::lower_bound(estart, eend, query_end) - ebegin;
+        if (query_width == 0) {
+            // Unless the query is zero-width, in which case we're not interested in subjects that have the same endpoint.
+            return std::upper_bound(estart, eend, query_end) - ebegin;
+        } else {
+            return std::lower_bound(estart, eend, query_end) - ebegin;
+        }
     };
 
     Index_ root_child_at = find_first_child(0, index.root_children);
 
-    Position_ query_width = query_end - query_start;
     workspace.history.clear();
     while (1) {
         Index_ current_index;
@@ -95,9 +100,11 @@ void overlaps_within(
 
         // If max_gap is violated, we don't bother to add the current subject interval,
         // but the children could be okay so we proceed to the next level of the NClist.
-        bool add_self = true;
+        bool add_self = true; 
         if (params.max_gap.has_value()) {
-            auto subject_width = index.ends[current_index] - index.starts[current_index];
+            auto subject_start = index.starts[current_index];
+            auto subject_end = index.ends[current_index];
+            auto subject_width = subject_end - subject_start;
             if (subject_width - query_width > *(params.max_gap)) {
                 add_self = false;
             }

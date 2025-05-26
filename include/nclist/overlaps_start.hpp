@@ -80,7 +80,7 @@ void overlaps_start(
         return false;
     };
 
-    Position_ effective_query_start;
+    Position_ effective_query_start = query_start;
     bool is_simple = true;
     if (params.min_overlap > 0) {
         constexpr Position_ maxed = std::numeric_limits<Position_>::max();
@@ -95,22 +95,14 @@ void overlaps_start(
     }
 
     auto skip_binary_search = [&](Position_ subject_start) -> bool {
-        if (is_simple) {
-            return subject_start > query_start;
-        } else {
-            return subject_start >= effective_query_start;
-        }
+        return subject_start >= effective_query_start;
     };
 
     auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
         auto ebegin = index.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
-        if (is_simple) {
-            return std::upper_bound(estart, eend, query_start) - ebegin;
-        } else {
-            return std::lower_bound(estart, eend, effective_query_start) - ebegin;
-        }
+        return std::lower_bound(estart, eend, effective_query_start) - ebegin;
     };
 
     Index_ root_child_at = 0;

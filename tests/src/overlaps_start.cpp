@@ -378,3 +378,38 @@ TEST(OverlapsStart, EarlyQuit) {
     nclist::overlaps_start(index, 0, 100, params, workspace, output);
     EXPECT_TRUE(output.empty());
 }
+
+TEST(OverlapsStart, ZeroWidth) {
+    std::vector<int> test_starts { 200, 400 };
+    std::vector<int> test_ends { 200, 500 };
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::OverlapsStartWorkspace<int> workspace;
+    nclist::OverlapsStartParameters<int> params;
+    std::vector<int> output;
+
+    nclist::overlaps_start(index, 200, 200, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
+    nclist::overlaps_start(index, 400, 400, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 1);
+
+    nclist::overlaps_start(index, 200, 200, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
+
+    params.max_gap = 10;
+    nclist::overlaps_start(index, 190, 300, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
+    nclist::overlaps_start(index, 410, 410, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 1);
+
+    params.min_overlap = 1;
+    nclist::overlaps_start(index, 200, 200, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+    nclist::overlaps_start(index, 400, 400, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}
