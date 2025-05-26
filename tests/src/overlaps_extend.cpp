@@ -353,3 +353,62 @@ TEST(OverlapsExtend, Double) {
     EXPECT_EQ(output[0], 0);
     EXPECT_EQ(output[1], 3);
 }
+
+/********************************************************************/
+
+TEST(OverlapsExtend, Duplicates) {
+    std::vector<int> starts{ 100, 50, 230, 50, 180, 20, 20 };
+    std::vector<int> ends  { 150, 80, 250, 80, 200, 30, 30 };
+    auto index = nclist::build<int, int>(starts.size(), starts.data(), ends.data());
+
+    nclist::OverlapsExtendParameters<int> params;
+    nclist::OverlapsExtendWorkspace<int> workspace;
+    std::vector<int> output;
+
+    nclist::overlaps_extend(index, 40, 90, params, workspace, output);
+    ASSERT_EQ(output.size(), 2);
+    std::sort(output.begin(), output.end());
+    EXPECT_EQ(output[0], 1);
+    EXPECT_EQ(output[1], 3);
+
+    nclist::overlaps_extend(index, 10, 90, params, workspace, output);
+    ASSERT_EQ(output.size(), 4);
+    std::sort(output.begin(), output.end());
+    EXPECT_EQ(output[0], 1);
+    EXPECT_EQ(output[1], 3);
+    EXPECT_EQ(output[2], 5);
+    EXPECT_EQ(output[3], 6);
+
+    nclist::overlaps_extend(index, 25, 200, params, workspace, output);
+    ASSERT_EQ(output.size(), 4);
+    std::sort(output.begin(), output.end());
+    EXPECT_EQ(output[0], 0);
+    EXPECT_EQ(output[1], 1);
+    EXPECT_EQ(output[2], 3);
+    EXPECT_EQ(output[3], 4);
+
+    nclist::overlaps_extend(index, 5, 20, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}
+
+TEST(OverlapsExtend, EarlyQuit) {
+    std::vector<int> starts{ 100, 50, 230, 180, 20 };
+    std::vector<int> ends  { 150, 80, 250, 200, 30 };
+    auto index = nclist::build<int, int>(starts.size(), starts.data(), ends.data());
+
+    nclist::OverlapsExtendWorkspace<int> workspace;
+    nclist::OverlapsExtendParameters<int> params;
+    params.quit_on_first = true;
+    std::vector<int> output;
+
+    nclist::overlaps_extend(index, 0, 100, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 1 || output[0] == 4);
+
+    nclist::overlaps_extend(index, 90, 240, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 0 || output[0] == 3);
+
+    nclist::overlaps_extend(index, 240, 300, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}

@@ -343,3 +343,51 @@ TEST(OverlapsWithin, Double) {
         EXPECT_EQ(output[2], 3);
     }
 }
+
+/********************************************************************/
+
+TEST(OverlapsWithin, Duplicates) {
+    std::vector<int> starts{ 10,  0, 10,  0 };
+    std::vector<int> ends  { 20, 50, 20, 50 };
+    auto index = nclist::build<int, int>(starts.size(), starts.data(), ends.data());
+
+    nclist::OverlapsWithinParameters<int> params;
+    nclist::OverlapsWithinWorkspace<int> workspace;
+    std::vector<int> output;
+
+    nclist::overlaps_within(index, 15, 25, params, workspace, output);
+    ASSERT_EQ(output.size(), 2);
+    std::sort(output.begin(), output.end());
+    EXPECT_EQ(output[0], 1);
+    EXPECT_EQ(output[1], 3);
+
+    nclist::overlaps_within(index, 15, 20, params, workspace, output);
+    ASSERT_EQ(output.size(), 4);
+    std::sort(output.begin(), output.end());
+    EXPECT_EQ(output[0], 0);
+    EXPECT_EQ(output[1], 1);
+    EXPECT_EQ(output[2], 2);
+    EXPECT_EQ(output[3], 3);
+}
+
+TEST(OverlapsWithin, EarlyQuit) {
+    std::vector<int> starts{ 10,  0, 10,  0 };
+    std::vector<int> ends  { 20, 50, 20, 50 };
+    auto index = nclist::build<int, int>(starts.size(), starts.data(), ends.data());
+
+    nclist::OverlapsWithinParameters<int> params;
+    nclist::OverlapsWithinWorkspace<int> workspace;
+    params.quit_on_first = true;
+    std::vector<int> output;
+
+    nclist::overlaps_within(index, 15, 25, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 1 || output[0] == 3);
+
+    nclist::overlaps_within(index, 14, 16, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] >= 0 && output[0] <= 3);
+
+    nclist::overlaps_within(index, 40, 100, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}

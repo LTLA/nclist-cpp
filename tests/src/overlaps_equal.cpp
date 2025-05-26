@@ -354,3 +354,58 @@ TEST(OverlapsEqual, Double) {
     nclist::overlaps_equal(index, 500.5, 510.5, params, workspace, output);
     EXPECT_TRUE(output.empty());
 }
+
+/********************************************************************/
+
+TEST(OverlapsEqual, Duplicates) {
+    std::vector<int> test_starts { 10, 30, 50, 30, 0, 50 };
+    std::vector<int> test_ends   { 20, 45, 70, 45, 5, 70 };
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::OverlapsEqualParameters<int> params;
+    nclist::OverlapsEqualWorkspace<int> workspace;
+    std::vector<int> output;
+
+    nclist::overlaps_equal(index, 30, 45, params, workspace, output);
+    ASSERT_EQ(output.size(), 2);
+    std::sort(output.begin(), output.end());
+    EXPECT_EQ(output[0], 1);
+    EXPECT_EQ(output[1], 3);
+
+    params.max_gap = 20;
+    nclist::overlaps_equal(index, 50, 60, params, workspace, output);
+    ASSERT_EQ(output.size(), 4);
+    std::sort(output.begin(), output.end());
+    EXPECT_EQ(output[0], 1);
+    EXPECT_EQ(output[1], 2);
+    EXPECT_EQ(output[2], 3);
+    EXPECT_EQ(output[3], 5);
+
+    params.max_gap = 0;
+    nclist::overlaps_equal(index, 0, 10, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}
+
+TEST(OverlapsEqual, EarlyQuit) {
+    std::vector<int> test_starts { 10, 30, 50, 0 };
+    std::vector<int> test_ends   { 20, 45, 70, 5 };
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::OverlapsEqualParameters<int> params;
+    nclist::OverlapsEqualWorkspace<int> workspace;
+    params.quit_on_first = true;
+    std::vector<int> output;
+
+    params.max_gap = 10;
+    nclist::overlaps_equal(index, 0, 10, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 0 || output[0] == 3);
+
+    nclist::overlaps_equal(index, 30, 45, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 1);
+
+    params.max_gap = 0;
+    nclist::overlaps_equal(index, 0, 90, params, workspace, output);
+    EXPECT_TRUE(output.empty());
+}
