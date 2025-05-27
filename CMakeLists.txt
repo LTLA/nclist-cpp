@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 project(nclist
     VERSION 0.1.0
-    DESCRIPTION "C++ implementation of nested containment lists"
+    DESCRIPTION "Nested containment lists in C++"
     LANGUAGES CXX)
 
 add_library(nclist INTERFACE)
@@ -29,3 +29,29 @@ if(NCLIST_TESTS)
         add_subdirectory(tests)
     endif() 
 endif()
+
+# Installing for find_package.
+include(CMakePackageConfigHelpers)
+
+install(DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ltla_nclist)
+
+install(TARGETS nclist 
+    EXPORT nclistTargets)
+
+install(EXPORT nclistTargets
+    FILE ltla_nclistTargets.cmake
+    NAMESPACE ltla::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ltla_nclist)
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/ltla_nclistConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ltla_nclist)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/ltla_nclistConfigVersion.cmake
+    COMPATIBILITY SameMajorVersion)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/ltla_nclistConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/ltla_nclistConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ltla_nclist)
