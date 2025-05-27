@@ -143,9 +143,9 @@ Functions</h2></td></tr>
 <tr class="memitem:af017ae50c229346e3cf8e41599fbb5c0" id="r_af017ae50c229346e3cf8e41599fbb5c0"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
 <tr class="memitem:af017ae50c229346e3cf8e41599fbb5c0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build</a> (Index_ num_subset, const Index_ *subset, const Position_ *starts, const Position_ *ends)</td></tr>
 <tr class="separator:af017ae50c229346e3cf8e41599fbb5c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b024bef1bbdb372e197861b78910cbb" id="r_a4b024bef1bbdb372e197861b78910cbb"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
-<tr class="memitem:a4b024bef1bbdb372e197861b78910cbb"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a4b024bef1bbdb372e197861b78910cbb">build</a> (Index_ num_ranges, const Position_ *starts, const Position_ *ends)</td></tr>
-<tr class="separator:a4b024bef1bbdb372e197861b78910cbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa77737736d32ca4e0fec076d92c64665" id="r_aa77737736d32ca4e0fec076d92c64665"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
+<tr class="memitem:aa77737736d32ca4e0fec076d92c64665"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa77737736d32ca4e0fec076d92c64665">build</a> (Index_ num_intervals, const Position_ *starts, const Position_ *ends)</td></tr>
+<tr class="separator:aa77737736d32ca4e0fec076d92c64665"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade7d2e27bd85d84a0cd210d3fcce7335" id="r_ade7d2e27bd85d84a0cd210d3fcce7335"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
 <tr class="memitem:ade7d2e27bd85d84a0cd210d3fcce7335"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ade7d2e27bd85d84a0cd210d3fcce7335">overlaps_any</a> (const <a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const <a class="el" href="structnclist_1_1OverlapsAnyParameters.html">OverlapsAnyParameters</a>&lt; Position_ &gt; &amp;params, <a class="el" href="structnclist_1_1OverlapsAnyWorkspace.html">OverlapsAnyWorkspace</a>&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</td></tr>
 <tr class="separator:ade7d2e27bd85d84a0cd210d3fcce7335"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -168,8 +168,8 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Header-only library for nested containment lists. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
-<a id="a4b024bef1bbdb372e197861b78910cbb" name="a4b024bef1bbdb372e197861b78910cbb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4b024bef1bbdb372e197861b78910cbb">&#9670;&#160;</a></span>build() <span class="overload">[1/2]</span></h2>
+<a id="aa77737736d32ca4e0fec076d92c64665" name="aa77737736d32ca4e0fec076d92c64665"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa77737736d32ca4e0fec076d92c64665">&#9670;&#160;</a></span>build() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -179,7 +179,7 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
         <tr>
           <td class="memname"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt; nclist::build </td>
           <td>(</td>
-          <td class="paramtype">Index_</td>          <td class="paramname"><span class="paramname"><em>num_ranges</em></span>, </td>
+          <td class="paramtype">Index_</td>          <td class="paramname"><span class="paramname"><em>num_intervals</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -195,20 +195,20 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
 </div><div class="memdoc">
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type of the subject range index. </td></tr>
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end position of each range. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end position of each interval. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">num_ranges</td><td>Number of subject ranges to include in the NCList. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Pointer to an array of length <code>num_ranges</code>, containing the start positions of all subject ranges. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array of length <code>num_ranges</code>, containing the end positions of all subject ranges. The <code>i</code>-th subject range is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">num_intervals</td><td>Number of subject intervals to include in the NCList. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Pointer to an array of length <code>num_intervals</code>, containing the start positions of all subject intervals. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array of length <code>num_intervals</code>, containing the end positions of all subject intervals. The <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> containing all subject ranges. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> containing all subject intervals. </dd></dl>
 
 </div>
 </div>
@@ -244,21 +244,21 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
 </div><div class="memdoc">
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type of the subject range index. </td></tr>
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each range. </td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">num_subset</td><td>Number of subject ranges in the subset to include in the <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">subset</td><td>Pointer to an array of length equal to <code>num_subset</code>, containing the subset of subject ranges to include in the NCList. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Pointer to an array containing the start positions of all subject ranges. This should be long enough to be addressable by any elements in <code>[subset, subset + num_subset)</code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array containing the end positions of all subject ranges. This should have the same length as the array pointed to by <code>starts</code>, where the <code>i</code>-th subject range is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">num_subset</td><td>Number of subject intervals in the subset to include in the <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">subset</td><td>Pointer to an array of length equal to <code>num_subset</code>, containing the subset of subject intervals to include in the NCList. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Pointer to an array containing the start positions of all subject intervals. This should be long enough to be addressable by any elements in <code>[subset, subset + num_subset)</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array containing the end positions of all subject intervals. This should have the same length as the array pointed to by <code>starts</code>, where the <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> containing the specified subset of subject ranges. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> containing the specified subset of subject intervals. </dd></dl>
 
 </div>
 </div>
@@ -302,22 +302,22 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Find subject ranges that exhibit any overlap with the query range.</p>
+<p>Find subject intervals that exhibit any overlap with the query interval.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type of the subject range index. </td></tr>
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each range.</td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">subject</td><td>An <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> of subject ranges, typically built with <code><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build()</a></code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query range. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query range. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">subject</td><td>An <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> of subject intervals, typically built with <code><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build()</a></code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query interval. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query interval. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">params</td><td>Parameters for the search. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">workspace</td><td>Workspace for intermediate data structures. This can be default-constructed and re-used across <code><a class="el" href="#ade7d2e27bd85d84a0cd210d3fcce7335">overlaps_any()</a></code> calls. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of subject range indices that overlap with the query range. Indices are reported in arbitrary order. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of subject interval indices that overlap with the query interval. Indices are reported in arbitrary order. </td></tr>
   </table>
   </dd>
 </dl>
@@ -364,22 +364,22 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Find subject ranges with the same end position as the query range.</p>
+<p>Find subject intervals with the same end position as the query interval.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type of the subject range index. </td></tr>
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each range.</td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">subject</td><td>An <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> of subject ranges, typically built with <code><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build()</a></code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query range. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query range. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">subject</td><td>An <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> of subject intervals, typically built with <code><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build()</a></code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query interval. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query interval. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">params</td><td>Parameters for the search. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">workspace</td><td>Workspace for intermediate data structures. This can be default-constructed and re-used across <code><a class="el" href="#a26c1a70487c3d4a5243622b1bf757523">overlaps_end()</a></code> calls. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of subject range indices that overlap with the query range. Indices are reported in arbitrary order. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of subject interval indices that overlap with the query interval. Indices are reported in arbitrary order. </td></tr>
   </table>
   </dd>
 </dl>
@@ -426,22 +426,22 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Find subject ranges with the same start and end positions as the query range. By default, given a subject range <code>[subject_start, subject_end)</code>, an overlap is considered if <code>subject_start == query_end</code> and <code>query_start == subject_end</code>. This behavior can be tuned with parameters in <code>params</code>.</p>
+<p>Find subject intervals with the same start and end positions as the query interval. By default, given a subject interval <code>[subject_start, subject_end)</code>, an overlap is considered if <code>subject_start == query_end</code> and <code>query_start == subject_end</code>. This behavior can be tuned with parameters in <code>params</code>.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Index_</td><td>Integer type of the subject range index. </td></tr>
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each range.</td></tr>
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir"></td><td class="paramname">subject</td><td>An <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> of subject ranges, typically built with <code><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build()</a></code>. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query range. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query range. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">subject</td><td>An <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> of subject intervals, typically built with <code><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build()</a></code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query interval. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query interval. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">params</td><td>Parameters for the search. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">workspace</td><td>Workspace for intermediate data structures. This can be default-constructed and re-used across <code><a class="el" href="#a749d236b974c3bacc843cc96548d7e20">overlaps_equal()</a></code> calls. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of subject range indices that overlap with the query range. Indices are reported in arbitrary order. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of subject interval indices that overlap with the query interval. Indices are reported in arbitrary order. </td></tr>
   </table>
   </dd>
 </dl>

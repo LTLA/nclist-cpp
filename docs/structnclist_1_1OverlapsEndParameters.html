@@ -116,7 +116,7 @@ Public Attributes</h2></td></tr>
 struct nclist::OverlapsEndParameters&lt; Position_ &gt;</div><p>Parameters for <code><a class="el" href="namespacenclist.html#a26c1a70487c3d4a5243622b1bf757523">overlaps_end()</a></code>. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each range. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval. </td></tr>
   </table>
   </dd>
 </dl>
@@ -134,7 +134,7 @@ template&lt;typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Maximum gap between the ends of the query and subject ranges. An overlap is reported between a query/subject pair if the gap is equal to or less than <code>max_gap</code>. </p>
+<p>Maximum gap between the ends of the query and subject intervals. An overlap is reported between a query/subject pair if the gap is equal to or less than <code>max_gap</code>. </p>
 
 </div>
 </div>
@@ -151,7 +151,7 @@ template&lt;typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Minimum overlap between query and subject ranges. An overlap will not be reported if the length of the overlapping subrange is less than <code>min_overlap</code>. </p>
+<p>Minimum overlap between query and subject intervals. An overlap will not be reported if the length of the overlapping subinterval is less than <code>min_overlap</code>. </p>
 
 </div>
 </div>
@@ -168,7 +168,7 @@ template&lt;typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Whether to quit immediately upon identifying an overlap with the query range. In such cases, <code>matches</code> will contain one arbitrarily chosen subject range that overlaps with the query. </p>
+<p>Whether to quit immediately upon identifying an overlap with the query interval. In such cases, <code>matches</code> will contain one arbitrarily chosen subject interval that overlaps with the query. </p>
 
 </div>
 </div>

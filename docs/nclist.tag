@@ -293,8 +293,8 @@
       <type>Nclist&lt; Index_, Position_ &gt;</type>
       <name>build</name>
       <anchorfile>namespacenclist.html</anchorfile>
-      <anchor>a4b024bef1bbdb372e197861b78910cbb</anchor>
-      <arglist>(Index_ num_ranges, const Position_ *starts, const Position_ *ends)</arglist>
+      <anchor>aa77737736d32ca4e0fec076d92c64665</anchor>
+      <arglist>(Index_ num_intervals, const Position_ *starts, const Position_ *ends)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
