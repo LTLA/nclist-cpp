@@ -29,8 +29,9 @@ struct OverlapsExtendWorkspace {
      */
     struct State {
         State() = default;
-        State(Index_ cat, Index_ cend) : child_at(cat), child_end(cend) {}
+        State(Index_ cat, Index_ cend, bool skip) : child_at(cat), child_end(cend), skip_search(skip) {}
         Index_ child_at = 0, child_end = 0;
+        bool skip_search = false;
     };
     std::vector<State> history;
     /**
@@ -152,6 +153,10 @@ void overlaps_extend_internal(
         return std::lower_bound(estart, eend, effective_query_start) - ebegin;
     };
 
+    auto can_skip_search = [&](Position_ subject_start) -> bool {
+        return subject_start >= effective_query_start;
+    };
+
     auto is_finished = [&](Position_ subject_start) -> bool {
         if constexpr(has_min_overlap_) {
             if (subject_start >= query_end) {
@@ -163,16 +168,22 @@ void overlaps_extend_internal(
         }
     };
 
-    Index_ root_child_at = find_first_child(0, subject.root_children);
+    Index_ root_child_at = 0;
+    bool root_skip_search = can_skip_search(subject.starts[0]);
+    if (!root_skip_search) {
+        root_child_at = find_first_child(0, subject.root_children);
+    }
 
     workspace.history.clear();
     while (1) {
         Index_ current_subject;
+        bool current_skip_search;
         if (workspace.history.empty()) {
             if (root_child_at == subject.root_children || is_finished(subject.starts[root_child_at])) {
                 break;
             }
             current_subject = root_child_at;
+            current_skip_search = root_skip_search;
             ++root_child_at;
         } else {
             auto& current_state = workspace.history.back();
@@ -181,6 +192,7 @@ void overlaps_extend_internal(
                 continue;
             }
             current_subject = current_state.child_at;
+            current_skip_search = current_state.skip_search;
             ++(current_state.child_at); // do this before the emplace_back(), otherwise the history might get reallocated and the reference would be dangling.
         }
 
@@ -200,8 +212,7 @@ void overlaps_extend_internal(
             }
         }
 
-        bool enclosed = (query_start <= subject_start && query_end >= subject_end);
-        if (enclosed) {
+        if (query_start <= subject_start && query_end >= subject_end) {
             matches.push_back(current_node.id);
             if (params.quit_on_first) {
                 return;
@@ -212,12 +223,12 @@ void overlaps_extend_internal(
         }
 
         if (current_node.children_start != current_node.children_end) {
-            if (enclosed) {
-                workspace.history.emplace_back(current_node.children_start, current_node.children_end);
+            if (current_skip_search) {
+                workspace.history.emplace_back(current_node.children_start, current_node.children_end, true);
             } else {
                 Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
                 if (start_pos != current_node.children_end) {
-                    workspace.history.emplace_back(start_pos, current_node.children_end);
+                    workspace.history.emplace_back(start_pos, current_node.children_end, can_skip_search(subject.starts[start_pos]));
                 }
             }
         }
