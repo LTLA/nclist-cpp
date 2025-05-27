@@ -69,15 +69,22 @@ struct OverlapsAnyParameters {
 };
 
 /**
- * @cond
+ * Find subject intervals that exhibit any overlap with the query interval. 
+ *
+ * @tparam Index_ Integer type of the subject interval index.
+ * @tparam Position_ Numeric type for the start/end positions of each interval.
+ *
+ * @param subject An `Nclist` of subject intervals, typically built with `build()`. 
+ * @param query_start Start of the query interval.
+ * @param query_end Non-inclusive end of the query interval.
+ * @param params Parameters for the search.
+ * @param workspace Workspace for intermediate data structures.
+ * This can be default-constructed and re-used across `overlaps_any()` calls.
+ * @param[out] matches On output, vector of subject interval indices that overlap with the query interval.
+ * Indices are reported in arbitrary order.
  */
-// We template by overlap mode for compile-time distinction between the
-// different choices, somewhat for efficiency but also to allow us to do
-// compile-time checks for invalid operations that span multiple modes.
-enum class OverlapsAnyMode : char { BASIC, MIN_OVERLAP, MAX_GAP };
-
-template<OverlapsAnyMode mode_, typename Index_, typename Position_>
-void overlaps_any_internal(
+template<typename Index_, typename Position_>
+void overlaps_any(
     const Nclist<Index_, Position_>& subject,
     Position_ query_start,
     Position_ query_end,
@@ -88,6 +95,14 @@ void overlaps_any_internal(
     matches.clear();
     if (subject.root_children == 0) {
         return;
+    }
+
+    enum class OverlapsAnyMode : char { BASIC, MIN_OVERLAP, MAX_GAP };
+    OverlapsAnyMode mode = OverlapsAnyMode::BASIC;
+    if (params.min_overlap > 0) {
+        mode = OverlapsAnyMode::MIN_OVERLAP;
+    } else if (params.max_gap.has_value()) {
+        mode = OverlapsAnyMode::MAX_GAP;
     }
 
     /****************************************
@@ -140,16 +155,16 @@ void overlaps_any_internal(
      *
      ****************************************/
 
-    if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+    if (mode == OverlapsAnyMode::MIN_OVERLAP) {
         if (query_end - query_start < params.min_overlap) {
             return;
         }
     }
 
-    typename std::conditional<mode_ == OverlapsAnyMode::BASIC, const char*, Position_>::type effective_query_start; // make sure compiler complains if we use this in basic mode.
-    if constexpr(mode_ == OverlapsAnyMode::MAX_GAP) {
+    Position_ effective_query_start = std::numeric_limits<Position_>::max(); // set it to something crazy so that something weird will happen if we use it in BASIC mode.
+    if (mode == OverlapsAnyMode::MAX_GAP) {
         effective_query_start = safe_subtract_gap(query_start, *(params.max_gap));
-    } else if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+    } else if (mode == OverlapsAnyMode::MIN_OVERLAP) {
         constexpr Position_ maxed = std::numeric_limits<Position_>::max();
         if (maxed - params.min_overlap < query_start) {
             // No point continuing as nothing will be found in the binary search.
@@ -163,7 +178,7 @@ void overlaps_any_internal(
         auto ebegin = subject.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
-        if constexpr(mode_ == OverlapsAnyMode::BASIC) {
+        if (mode == OverlapsAnyMode::BASIC) {
             return std::upper_bound(estart, eend, query_start) - ebegin;
         } else {
             return std::lower_bound(estart, eend, effective_query_start) - ebegin;
@@ -171,7 +186,7 @@ void overlaps_any_internal(
     };
 
     auto can_skip_search = [&](Position_ subject_start) -> bool {
-        if constexpr(mode_ == OverlapsAnyMode::BASIC) {
+        if (mode == OverlapsAnyMode::BASIC) {
             return subject_start > query_start;
         } else {
             return subject_start >= effective_query_start;
@@ -179,18 +194,18 @@ void overlaps_any_internal(
     };
 
     auto is_finished = [&](Position_ subject_start) -> bool {
-        if constexpr(mode_ == OverlapsAnyMode::MAX_GAP) {
+        if (mode == OverlapsAnyMode::BASIC) {
+            return subject_start >= query_end;
+        } else if (mode == OverlapsAnyMode::MAX_GAP) {
             if (subject_start < query_end) {
                 return false;
             }
             return subject_start - query_end > *(params.max_gap);
-        } else if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+        } else { // i.e., mode == OverlapsAnyMode::MIN_OVERLAP
             if (subject_start >= query_end) {
                 return true;
             }
             return query_end - subject_start < params.min_overlap;
-        } else {
-            return subject_start >= query_end;
         }
     };
 
@@ -223,7 +238,7 @@ void overlaps_any_internal(
         }
 
         const auto& current_node = subject.nodes[current_subject];
-        if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
+        if (mode == OverlapsAnyMode::MIN_OVERLAP) {
             if (std::min(query_end, subject.ends[current_subject]) - std::max(query_start, subject.starts[current_subject]) < params.min_overlap) {
                 // No point continuing with the children, as all children will by definition have smaller overlaps and cannot satisfy `min_overlap`.
                 continue;
@@ -248,42 +263,6 @@ void overlaps_any_internal(
                 }
             }
         }
-    }
-}
-/**
- * @endcond
- */
-
-/**
- * Find subject intervals that exhibit any overlap with the query interval. 
- *
- * @tparam Index_ Integer type of the subject interval index.
- * @tparam Position_ Numeric type for the start/end positions of each interval.
- *
- * @param subject An `Nclist` of subject intervals, typically built with `build()`. 
- * @param query_start Start of the query interval.
- * @param query_end Non-inclusive end of the query interval.
- * @param params Parameters for the search.
- * @param workspace Workspace for intermediate data structures.
- * This can be default-constructed and re-used across `overlaps_any()` calls.
- * @param[out] matches On output, vector of subject interval indices that overlap with the query interval.
- * Indices are reported in arbitrary order.
- */
-template<typename Index_, typename Position_>
-void overlaps_any(
-    const Nclist<Index_, Position_>& subject,
-    Position_ query_start,
-    Position_ query_end,
-    const OverlapsAnyParameters<Position_>& params,
-    OverlapsAnyWorkspace<Index_>& workspace,
-    std::vector<Index_>& matches)
-{
-    if (params.min_overlap) {
-        overlaps_any_internal<OverlapsAnyMode::MIN_OVERLAP>(subject, query_start, query_end, params, workspace, matches);
-    } else if (params.max_gap.has_value()) {
-        overlaps_any_internal<OverlapsAnyMode::MAX_GAP>(subject, query_start, query_end, params, workspace, matches);
-    } else {
-        overlaps_any_internal<OverlapsAnyMode::BASIC>(subject, query_start, query_end, params, workspace, matches);
     }
 }
 

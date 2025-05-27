@@ -65,11 +65,24 @@ struct OverlapsExtendParameters {
     bool quit_on_first = false;
 };
 
+
 /**
- * @cond
+ * Find subject ranges that are extended by the query range, i.e., each subject range is a subrange of the query.
+ *
+ * @tparam Index_ Integer type of the subject range index.
+ * @tparam Position_ Numeric type for the start/end positions of each range.
+ *
+ * @param subject An `Nclist` of subject ranges, typically built with `build()`. 
+ * @param query_start Start of the query range.
+ * @param query_end Non-inclusive end of the query range.
+ * @param params Parameters for the search.
+ * @param workspace Workspace for intermediate data structures.
+ * This can be default-constructed and re-used across `overlaps_extend()` calls.
+ * @param[out] matches On output, vector of subject range indices that overlap with the query range.
+ * Indices are reported in arbitrary order.
  */
-template<bool has_min_overlap_, typename Index_, typename Position_>
-void overlaps_extend_internal(
+template<typename Index_, typename Position_>
+void overlaps_extend(
     const Nclist<Index_, Position_>& subject,
     Position_ query_start,
     Position_ query_end,
@@ -130,17 +143,15 @@ void overlaps_extend_internal(
      ****************************************/
 
     Position_ query_width = query_end - query_start;
-    if constexpr(has_min_overlap_) {
-        if (query_width < params.min_overlap) {
-            return;
-        }
+    if (params.min_overlap > 0 && query_width < params.min_overlap) {
+        return;
     }
 
     Position_ effective_query_start = query_start;
-    if constexpr(has_min_overlap_) {
+    if (params.min_overlap > 0) {
         constexpr Position_ maxed = std::numeric_limits<Position_>::max();
         if (maxed - params.min_overlap < query_start) {
-            return;
+            return; // no point continuing as nothing can be greater than or equal to the overlap-adjusted start.
         } else {
             effective_query_start = query_start + params.min_overlap;
         }
@@ -158,7 +169,7 @@ void overlaps_extend_internal(
     };
 
     auto is_finished = [&](Position_ subject_start) -> bool {
-        if constexpr(has_min_overlap_) {
+        if (params.min_overlap > 0) {
             if (subject_start >= query_end) {
                 return true;
             }
@@ -201,7 +212,7 @@ void overlaps_extend_internal(
         auto subject_end = subject.ends[current_subject];
         auto subject_width = subject_end - subject_start;
 
-        if constexpr(has_min_overlap_) {
+        if (params.min_overlap > 0) {
             if (subject_width < params.min_overlap) {
                 continue;
             }
@@ -232,40 +243,6 @@ void overlaps_extend_internal(
                 }
             }
         }
-    }
-}
-/**
- * @endcond
- */
-
-/**
- * Find subject ranges that are extended by the query range, i.e., each subject range is a subrange of the query.
- *
- * @tparam Index_ Integer type of the subject range index.
- * @tparam Position_ Numeric type for the start/end positions of each range.
- *
- * @param subject An `Nclist` of subject ranges, typically built with `build()`. 
- * @param query_start Start of the query range.
- * @param query_end Non-inclusive end of the query range.
- * @param params Parameters for the search.
- * @param workspace Workspace for intermediate data structures.
- * This can be default-constructed and re-used across `overlaps_extend()` calls.
- * @param[out] matches On output, vector of subject range indices that overlap with the query range.
- * Indices are reported in arbitrary order.
- */
-template<typename Index_, typename Position_>
-void overlaps_extend(
-    const Nclist<Index_, Position_>& subject,
-    Position_ query_start,
-    Position_ query_end,
-    const OverlapsExtendParameters<Position_>& params,
-    OverlapsExtendWorkspace<Index_>& workspace,
-    std::vector<Index_>& matches)
-{
-    if (params.min_overlap > 0) {
-        overlaps_extend_internal<true>(subject, query_start, query_end, params, workspace, matches);
-    } else {
-        overlaps_extend_internal<false>(subject, query_start, query_end, params, workspace, matches);
     }
 }
 
