@@ -155,17 +155,14 @@ void overlaps_start(
     }
 
     Position_ effective_query_start = query_start;
-    bool is_simple = true;
     if (params.min_overlap > 0) {
         constexpr Position_ maxed = std::numeric_limits<Position_>::max();
         if (maxed - params.min_overlap < query_start) {
             return; // No point continuing as nothing will be found in the binary search.
         }
         effective_query_start = query_start + params.min_overlap;
-        is_simple = false;
     } else if (params.max_gap > 0) {
         effective_query_start = safe_subtract_gap(query_start, params.max_gap);
-        is_simple = false;
     }
 
     auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
@@ -237,26 +234,22 @@ void overlaps_start(
         auto subject_start = subject.starts[current_subject];
         auto subject_end = subject.ends[current_subject];
 
-        // Even if the current subject interval isn't a match, its children might still be okay, so we have to keep going.
-        bool okay;
-        if (is_simple) {
-            okay = (subject_start == query_start);
-        } else {
-            if (params.min_overlap > 0) {
-                auto common_end = std::min(subject_end, query_end);
-                auto common_start = std::max(subject_start, query_start);
-                if (common_end <= common_start || common_end - common_start < params.min_overlap) {
-                    // No point processing the children if the minimum overlap isn't satisified.
-                    continue;
-                }
-            }
-            if (params.max_gap > 0) {
-                okay = !diff_above_gap(query_start, subject_start, params.max_gap);
-            } else {
-                okay = (subject_start == query_start);
+        if (params.min_overlap > 0) {
+            auto common_end = std::min(subject_end, query_end);
+            auto common_start = std::max(subject_start, query_start);
+            if (common_end <= common_start || common_end - common_start < params.min_overlap) {
+                // No point processing the children if the minimum overlap isn't satisified.
+                continue;
             }
         }
 
+        // Even if the current subject interval isn't a match, its children might still be okay, so we have to keep going.
+        bool okay;
+        if (params.max_gap > 0) {
+            okay = !diff_above_gap(query_start, subject_start, params.max_gap);
+        } else {
+            okay = (subject_start == query_start);
+        }
         if (okay) {
             matches.push_back(current_node.id);
             if (params.quit_on_first) {

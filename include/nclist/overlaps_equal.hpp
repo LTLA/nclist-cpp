@@ -191,7 +191,6 @@ void overlaps_equal(
     };
 
     Index_ root_child_at = find_first_child(0, subject.root_children);
-    bool is_simple = (params.min_overlap == 0 && params.max_gap == 0);
 
     workspace.history.clear();
     while (1) {
@@ -216,24 +215,21 @@ void overlaps_equal(
         auto subject_start = subject.starts[current_subject];
         auto subject_end = subject.ends[current_subject];
 
+        if (params.min_overlap > 0) {
+            auto common_end = std::min(subject_end, query_end);
+            auto common_start = std::max(subject_start, query_start);
+            if (common_end <= common_start || common_end - common_start < params.min_overlap) {
+                // No point processing the children if the minimum overlap isn't satisified.
+                continue;
+            }
+        }
+
         // Even if the current subject interval isn't a match, its children might still be okay, so we have to keep going.
         bool okay = true;
-        if (is_simple) {
-            okay = (subject_start == query_start && subject_end == query_end);
+        if (params.max_gap > 0) {
+            okay = !diff_above_gap(query_start, subject_start, params.max_gap) && !diff_above_gap(query_end, subject_end, params.max_gap);
         } else {
-            if (params.min_overlap > 0) {
-                auto common_end = std::min(subject_end, query_end);
-                auto common_start = std::max(subject_start, query_start);
-                if (common_end <= common_start || common_end - common_start < params.min_overlap) {
-                    // No point processing the children if the minimum overlap isn't satisified.
-                    continue;
-                }
-            }
-            if (params.max_gap > 0) {
-                okay = !diff_above_gap(query_start, subject_start, params.max_gap) && !diff_above_gap(query_end, subject_end, params.max_gap);
-            } else {
-                okay = (subject_start == query_start && subject_end == query_end);
-            }
+            okay = (subject_start == query_start && subject_end == query_end);
         }
 
         if (okay) {
@@ -244,7 +240,7 @@ void overlaps_equal(
             if (current_node.duplicates_start != current_node.duplicates_end) {
                 matches.insert(matches.end(), subject.duplicates.begin() + current_node.duplicates_start, subject.duplicates.begin() + current_node.duplicates_end);
             }
-            if (is_simple) { // no need to continue traversal, there should only be one node that is exactly equal.
+            if (params.max_gap == 0) { // no need to continue traversal, there should only be one node that is exactly equal.
                 return;
             }
         }
