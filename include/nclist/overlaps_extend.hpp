@@ -135,7 +135,7 @@ void overlaps_extend_internal(
         }
     }
 
-    typename std::conditional<has_min_overlap_, Position_, const char*>::type effective_query_start; // make sure compiler complains if we use this in basic mode.
+    Position_ effective_query_start = query_start;
     if constexpr(has_min_overlap_) {
         constexpr Position_ maxed = std::numeric_limits<Position_>::max();
         if (maxed - params.min_overlap < query_start) {
@@ -149,11 +149,7 @@ void overlaps_extend_internal(
         auto ebegin = subject.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
-        if constexpr(has_min_overlap_) {
-            return std::lower_bound(estart, eend, effective_query_start) - ebegin;
-        } else {
-            return std::upper_bound(estart, eend, query_start) - ebegin;
-        }
+        return std::lower_bound(estart, eend, effective_query_start) - ebegin;
     };
 
     auto is_finished = [&](Position_ subject_start) -> bool {
@@ -163,7 +159,7 @@ void overlaps_extend_internal(
             }
             return query_end - subject_start < params.min_overlap;
         } else {
-            return subject_start >= query_end; 
+            return subject_start > query_end; 
         }
     };
 

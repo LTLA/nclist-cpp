@@ -423,18 +423,18 @@ TEST(OverlapsExtend, ZeroWidth) {
     std::vector<int> output;
 
     nclist::overlaps_extend(index, 0, 200, params, workspace, output);
-    EXPECT_TRUE(output.empty());
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
     nclist::overlaps_extend(index, 100, 300, params, workspace, output);
     ASSERT_EQ(output.size(), 1);
     EXPECT_EQ(output[0], 0);
     nclist::overlaps_extend(index, 200, 300, params, workspace, output);
-    EXPECT_TRUE(output.empty());
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
 
-    // A zero-length range doesn't overlap itself, how can it even extend itself?
-    // Consider a query [qs, qe) and a subject [qe, se), where the former obviously doesn't extend the latter;
-    // this conclusion should not change as se approaches qe.
     nclist::overlaps_extend(index, 200, 200, params, workspace, output);
-    EXPECT_TRUE(output.empty());
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
 
     params.min_overlap = 10;
     nclist::overlaps_extend(index, 100, 300, params, workspace, output);

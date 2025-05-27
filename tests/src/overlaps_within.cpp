@@ -403,17 +403,19 @@ TEST(OverlapsWithin, ZeroWidth) {
 
     nclist::overlaps_within(index, 300, 300, params, workspace, output);
     EXPECT_TRUE(output.empty());
+    nclist::overlaps_within(index, 400, 400, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 1);
     nclist::overlaps_within(index, 450, 450, params, workspace, output);
     ASSERT_EQ(output.size(), 1);
     EXPECT_EQ(output[0], 1);
     nclist::overlaps_within(index, 500, 500, params, workspace, output);
-    EXPECT_TRUE(output.empty());
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 1);
 
-    // A zero-length range doesn't overlap itself, how can it even within itself?
-    // Consider a query [qs, qe) and a subject [qe, se), where the former obviously doesn't lie within the latter;
-    // this conclusion should not change as qs approaches qe.
     nclist::overlaps_within(index, 200, 200, params, workspace, output);
-    EXPECT_TRUE(output.empty());
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_EQ(output[0], 0);
 
     params.min_overlap = 10;
     nclist::overlaps_within(index, 450, 450, params, workspace, output);

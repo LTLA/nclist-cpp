@@ -134,11 +134,7 @@ void overlaps_within(
         auto ebegin = subject.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
-        if (query_width == 0) {
-            return std::upper_bound(estart, eend, query_end) - ebegin;
-        } else {
-            return std::lower_bound(estart, eend, query_end) - ebegin;
-        }
+        return std::lower_bound(estart, eend, query_end) - ebegin;
     };
 
     auto is_finished = [&](Position_ subject_start) -> bool {
