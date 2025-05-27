@@ -92,33 +92,57 @@ void overlaps_within(
         return;
     }
 
-    // This is the only place that we need to consider the min_overlap; if an
-    // subject interval envelops the query, it should be at least as wide, so
-    // will automatically satisfy min_overlap. 
+    /****************************************
+     * # Default
+     *
+     * Our aim is to find overlaps to a subject interval `i` where `subject_starts[i] <= query_start` and `subject_ends[i] >= query_end`. 
+     *
+     * At each node of the NCList, we search for the first child where the `subject_ends` is greater than or equal to `query_end`. 
+     * Earlier "sibling" intervals must have earlier end positions that must be less than that of the query interval, as well as their children, and so can be skipped.
+     * We do so using a binary search (std::lower_bound) on `subject_ends` - recall that these are sorted for children of each node.
+     *
+     * We then iterate until the first interval `j` where `query_start < subject_starts[j]`, at which point we stop.
+     * None of `j`, the children of `j`, nor any sibling intervals after `j` can have a start position less than or equal to that of the query interval, so there's no point in traversing those nodes. 
+     * All subject intervals encountered during this iteration are reported in `matches`, and their children are searched in the same manner.
+     *
+     * Unlike `overlaps_any()`, there is no ability to skip the binary search for the descendents of a node.
+     * Sure, the start positions of all descendents are no less than the node's subject interval's start position,
+     * but this doesn't say much about the comparison between the subject and query end positions.
+     *
+     * # Max gap
+     *
+     * Here, our aim is the same as in the default case, with the extra requirement that the difference in lengths of overlapping subject/query pairs is less than or equal to `max_gap`.
+     * This follows the same logic as in the default case with some adjustments:
+     *
+     * - We do not report a subject interval where the query width is greater than the subject's width by more than `max_gap`.
+     *   However, we still traverse the children, as they are smaller and might satisfy the `max_gap` criterion.
+     *
+     * # Min overlap
+     *
+     * Here, we apply the extra restriction that the overlapping subinterval must have length greater than `min_overlap`.
+     * This is as simple as returning early if the query interval is of length less than `min_overlap`.
+     * Otherwise, any overlap that satisfies the default case will automatically have an overlapping subinterval of at least `min_overlap`.
+     *
+     ****************************************/
+
     Position_ query_width = query_end - query_start;
     if (params.min_overlap > 0 && query_width < params.min_overlap) {
         return;
     }
 
-    // If a subject interval doesn't satisfy these requirements, none of its
-    // children will either, so we can safely declare that iteration as being
-    // finished. Don't check the max_gap constraints here, as parent could fail
-    // this while its child could satisfy it.
-    auto is_finished = [&](Position_ subject_start) -> bool {
-        return subject_start > query_start;
-    };
-
-    // We start from the first subject interval that finishes at or after the query. 
     auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
         auto ebegin = subject.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
         if (query_width == 0) {
-            // Unless the query is zero-width, in which case we're not interested in subjects that have the same endpoint.
             return std::upper_bound(estart, eend, query_end) - ebegin;
         } else {
             return std::lower_bound(estart, eend, query_end) - ebegin;
         }
+    };
+
+    auto is_finished = [&](Position_ subject_start) -> bool {
+        return subject_start > query_start;
     };
 
     Index_ root_child_at = find_first_child(0, subject.root_children);

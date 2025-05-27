@@ -18,8 +18,8 @@ namespace nclist {
 /**
  * @brief Pre-built nested containment list.
  *
- * @tparam Index_ Integer type of the subject range index.
- * @tparam Position_ Numeric type for the start/end positions of each range.
+ * @tparam Index_ Integer type of the subject interval index.
+ * @tparam Position_ Numeric type for the start/end positions of each interval.
  *
  * Instances of an `Nclist` are usually created by `build()`.
  */
@@ -28,27 +28,36 @@ struct Nclist {
 /**
  * @cond
  */
+    // Sequence of `nodes` that are children of the root node, i.e., `nodes[i]` is a child for `i` in `[0, root_children)`.
     Index_ root_children = 0;
 
-    // Length of 'nodes' and 'duplicates' must be less than the number of
-    // ranges, so we can use Index_ as the indexing type.
     struct Node {
         Node() = default;
         Node(Index_ id) : id(id) {}
+
+        // Index of the subject interval in the user-supplied arrays. 
         Index_ id = 0;
+
+        // Sequence of `nodes` that are children of this node, i.e., `nodes[i]` is a child for `i` in `[children_start, children_end)`.
+        // Note that length of `nodes` is no greater than the number of intervals, so we can use Index_ as the indexing type.
         Index_ children_start = 0;
         Index_ children_end = 0;
+
+        // Sequence of `duplicates` containing indices of subject intervals that are duplicates of `id`,
+        // i.e., `duplicates[i]` is a duplicate interval for `i` in `[duplicates_start, duplicates_end)`.
+        // Note that length of `duplicates` is no greater than the number of intervals, so we can use Index_ as the indexing type.
         Index_ duplicates_start = 0;
         Index_ duplicates_end = 0;
     };
+
     std::vector<Node> nodes; 
 
-    // These are the start and end positions corresponding to Node::id. We put
-    // them in a separate vector for better cache locality in binary searches.
+    // These are the start and end positions corresponding to Node::id,
+    // i.e., `starts[i]` is equal to `subject_starts[nodes[i].id]` where `subject_starts` is the `starts` in `build()`.
+    // We put them in a separate vector for better cache locality in binary searches.
     std::vector<Position_> starts, ends;
 
-    // These are concatenations of all the individual 'duplicates' vectors, to
-    // improve cache locality during tree traversal.
+    // Concatenations of the individual `duplicates` vectors, to reduce fragmentation.
     std::vector<Index_> duplicates;
 /**
  * @endcond
@@ -60,8 +69,7 @@ struct Nclist {
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, const Position_* starts, const Position_* ends) {
-    // We want to sort by increasing start but DECREASING end, so that the
-    // children sort after their parents. 
+    // We want to sort by increasing start but DECREASING end, so that the children sort after their parents. 
     std::sort(subset, subset + num_subset, [&](Index_ l, Index_ r) -> bool {
         if (starts[l] == starts[r]) {
             return ends[l] > ends[r];
@@ -70,31 +78,32 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
         }
     });
 
-    // This uses offsets instead of pointers to dynamically allocated arrays.
-    // We can't easily do that in C++ while still using std::vector, because
-    // the type of the node is not yet complete when it references itself;
-    // and I don't want to use a unique_ptr here.
-    // 
-    // Also note that all offsets can be represented as Index_ as they point
-    // into 'working_contents', which can be no longer than 'num_subset'.
     struct WorkingNode {
         WorkingNode() = default;
         WorkingNode(Index_ id) : id(id) {}
-        Index_ id = std::numeric_limits<Index_>::max(); // to avoid confusion when debugging.
+
+        // Index of the interval, i.e., one of the elements of `subset`.
+        // We set the default to the max to avoid confusion when debugging.
+        Index_ id = std::numeric_limits<Index_>::max();
+
+        // Each child is represented as an offset into `working_list`.
+        // All offsets can be represented as Index_ as they point into `working_list`, which can be no longer than `num_subset`.
         std::vector<Index_> children;
+
+        // Duplicate intervals with the same coordinates as `id`.
         std::vector<Index_> duplicates;
     };
-    WorkingNode top_level;
-    std::vector<WorkingNode> working_contents;
-    working_contents.reserve(num_subset);
+    WorkingNode top_node;
+    std::vector<WorkingNode> working_list;
+    working_list.reserve(num_subset);
 
-    struct StackElement {
-        StackElement() = default;
-        StackElement(Index_ offset, Position_ end) : offset(offset), end(end) {}
-        Index_ offset;
-        Position_ end;
+    struct Level {
+        Level() = default;
+        Level(Index_ offset, Position_ end) : offset(offset), end(end) {}
+        Index_ offset; // offset into `working_list`
+        Position_ end; // storing the end coordinate for better cache locality.
     };
-    std::vector<StackElement> stack;
+    std::vector<Level> levels;
 
     Position_ last_start = 0, last_end = 0;
     Index_ num_duplicates = 0;
@@ -104,45 +113,48 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
 
         // Special handling of duplicate intervals.
         if (r && last_start == curstart && last_end == curend) {
-            working_contents[stack.back().offset].duplicates.push_back(curid);
+            working_list[levels.back().offset].duplicates.push_back(curid);
             ++num_duplicates;
             continue;
         }
 
-        while (!stack.empty() && stack.back().end < curend) {
-            stack.pop_back();
+        while (!levels.empty() && levels.back().end < curend) {
+            levels.pop_back();
         }
-        auto& landing_node = (stack.empty() ? top_level : working_contents[stack.back().offset]); 
+        auto& landing_node = (levels.empty() ? top_node : working_list[levels.back().offset]); 
 
-        auto used = working_contents.size();
-        working_contents.emplace_back(curid);
+        auto used = working_list.size();
+        working_list.emplace_back(curid);
         landing_node.children.push_back(used); 
-        stack.emplace_back(used, curend);
+        levels.emplace_back(used, curend);
         last_start = curstart;
         last_end = curend;
     }
 
-    // Depth-first traversal of the NCList tree, to convert it into a
-    // contiguous structure for export. This should improve cache locality.
+    // We convert the `working_list` into the output format where the children's start/end coordinates are laid out contiguously.
+    // This should make for an easier binary search and improve cache locality.
     Nclist<Index_, Position_> output;
-    output.nodes.reserve(working_contents.size());
-    output.starts.reserve(working_contents.size());
-    output.ends.reserve(working_contents.size());
+    output.nodes.reserve(working_list.size());
+    output.starts.reserve(working_list.size());
+    output.ends.reserve(working_list.size());
     output.duplicates.reserve(num_duplicates);
 
     auto deposit_children = [&](const WorkingNode& working_node) -> void {
         const auto& working_child_indices = working_node.children;
         for (auto work_index : working_child_indices) {
-            const auto& working_child_node = working_contents[work_index];
+            const auto& working_child_node = working_list[work_index];
             auto child_id = working_child_node.id;
+
+            // Starts and ends are guaranteed to be sorted for all children of a given node.
+            // Obviously we already sorted in order of increasing starts, and interval indices were added to each `WorkingNode::children` vector in that order.
+            // For the ends, this is less obvious but any ends that are equal to or less than the previous end should be a child of that previous interval, and so would not show up here.
             output.starts.push_back(starts[child_id]);
             output.ends.push_back(ends[child_id]);
 
             output.nodes.emplace_back(child_id);
             auto& output_child_node = output.nodes.back(); 
 
-            // We temporarily store the working index of the kid here, to allow
-            // us to cross-reference back into 'working_contents' later.
+            // We temporarily store the working index of the kid here, to allow us to cross-reference back into `working_list` later.
             output_child_node.children_start = work_index;
 
             if (!working_child_node.duplicates.empty()) {
@@ -152,9 +164,11 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
             }
         }
     };
-    deposit_children(top_level);
+    deposit_children(top_node);
     output.root_children = output.nodes.size();
 
+    // Performing a depth-first search to allocate the nodes in the output format.
+    // This effectively does two passes for each node; once to allocate it in `Nclist::nodes`, and another pass to set its `children_start` and `children_end`.
     Index_ root_progress = 0;
     std::vector<std::pair<Index_, Index_> > history;
     while (1) {
@@ -176,7 +190,7 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
         }
 
         auto working_child_index = output.nodes[current_output_index].children_start; // fetching it from the temporary store location, see above.
-        const auto& working_node = working_contents[working_child_index];
+        const auto& working_node = working_list[working_child_index];
         Index_ first_child = output.nodes.size();
         output.nodes[current_output_index].children_start = first_child;
         deposit_children(working_node);
@@ -194,16 +208,16 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
  */
 
 /**
- * @tparam Index_ Integer type of the subject range index.
- * @tparam Position_ Numeric type for the start/end positions of each range.
- * @param num_subset Number of subject ranges in the subset to include in the `Nclist`.
- * @param[in] subset Pointer to an array of length equal to `num_subset`, containing the subset of subject ranges to include in the NCList.
- * @param[in] starts Pointer to an array containing the start positions of all subject ranges.
+ * @tparam Index_ Integer type of the subject interval index.
+ * @tparam Position_ Numeric type for the start/end positions of each interval.
+ * @param num_subset Number of subject intervals in the subset to include in the `Nclist`.
+ * @param[in] subset Pointer to an array of length equal to `num_subset`, containing the subset of subject intervals to include in the NCList.
+ * @param[in] starts Pointer to an array containing the start positions of all subject intervals.
  * This should be long enough to be addressable by any elements in `[subset, subset + num_subset)`.
- * @param[in] ends Pointer to an array containing the end positions of all subject ranges.
- * This should have the same length as the array pointed to by `starts`, where the `i`-th subject range is defined as `[starts[i], ends[i])`.
+ * @param[in] ends Pointer to an array containing the end positions of all subject intervals.
+ * This should have the same length as the array pointed to by `starts`, where the `i`-th subject interval is defined as `[starts[i], ends[i])`.
  * Note the non-inclusive nature of the end positions.
- * @return A `Nclist` containing the specified subset of subject ranges.
+ * @return A `Nclist` containing the specified subset of subject intervals.
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const Position_* starts, const Position_* ends) {
@@ -212,20 +226,20 @@ Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const P
 }
 
 /**
- * @tparam Index_ Integer type of the subject range index.
- * @tparam Position_ Numeric type for the start/end position of each range.
- * @param num_ranges Number of subject ranges to include in the NCList.
- * @param[in] starts Pointer to an array of length `num_ranges`, containing the start positions of all subject ranges.
- * @param[in] ends Pointer to an array of length `num_ranges`, containing the end positions of all subject ranges.
- * The `i`-th subject range is defined as `[starts[i], ends[i])`. 
+ * @tparam Index_ Integer type of the subject interval index.
+ * @tparam Position_ Numeric type for the start/end position of each interval.
+ * @param num_intervals Number of subject intervals to include in the NCList.
+ * @param[in] starts Pointer to an array of length `num_intervals`, containing the start positions of all subject intervals.
+ * @param[in] ends Pointer to an array of length `num_intervals`, containing the end positions of all subject intervals.
+ * The `i`-th subject interval is defined as `[starts[i], ends[i])`. 
  * Note the non-inclusive nature of the end positions.
- * @return A `Nclist` containing all subject ranges.
+ * @return A `Nclist` containing all subject intervals.
  */
 template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build(Index_ num_ranges, const Position_* starts, const Position_* ends) {
-    std::vector<Index_> copy(num_ranges);
+Nclist<Index_, Position_> build(Index_ num_intervals, const Position_* starts, const Position_* ends) {
+    std::vector<Index_> copy(num_intervals);
     std::iota(copy.begin(), copy.end(), static_cast<Index_>(0));
-    return build_internal(num_ranges, copy.data(), starts, ends);
+    return build_internal(num_intervals, copy.data(), starts, ends);
 }
 
 }

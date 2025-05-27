@@ -93,11 +93,91 @@ void overlaps_start(
     if (subject.root_children == 0) {
         return;
     }
+
+    /****************************************
+     * # Default
+     *
+     * Our aim is to find overlaps to a subject interval `i` where `subject_start[i] == query_start`. 
+     *
+     * At each node of the NCList, we search for the first child where the `subject_ends` is greater than or equal to `query_start`. 
+     * Earlier "sibling" intervals must have earlier start positions that cannot be equal to that of the query interval - nor can their children.
+     * We do so using a binary search (std::lower_bound) on `subject_ends` - recall that these are sorted for children of each node.
+     *
+     * We then iterate until the first interval `j` where `query_start < subject_starts[j]`, at which point we stop.
+     * None of `j`, the children of `j`, nor any sibling intervals after `j` can have a start position equal to the query interval, so there's no point in traversing those nodes. 
+     * Any subject interval encountered during this iteration with an equal start position to the query is reported in `matches`.
+     * Regardless of whether the start position is equal, we repeat the search on the children of all subject intervals encountered during iteration, as one of them might have an equal start position.
+     *
+     * For a modest efficiency boost, we consider the case where `query_start <= subject_starts[i]` for node `i`.
+     * In such cases, `subject_ends` for all children of `i` must also satisfy `query_start <= subject_ends[i]`, in which case the binary search can be skipped.
+     * Moreover, all descendent intervals of `i` must end after `query_start`, so the binary search can be skipped for the entire lineage of the NCList.
+     *
+     * # Max gap
+     *
+     * Here, our aim is to find subject intervals where `abs(query_start - subject_starts[i]) <= max_gap`.
+     * This follows much the same logic as in the default case with some adjustments:
+     *
+     * - We consider an "effective" query start as `effective_query_start = query_start - max_gap`.
+     * - We then perform a binary search to find the first `subject_ends` that is greater than or equal to `effective_query_start`.
+     *   This is the earlier subject interval that has a start position (or has children with a start position) within `max_gap` of the query start.
+     * - Similarly, we check if `effective_query_start <= subject_starts[i]` to determine whether to skip the binary search.
+     * - We stop iteration once `subject_starts[j] - query_start > max_gap`, after which we know that all start positions of siblings/children must lie beyond `max_gap`.
+     * - Any subject interval encountered during this iteration with a start position that satisfies `max_gap` is reported in `matches`.
+     *
+     * # Min overlap
+     *
+     * Here, we apply the extra restriction that the overlapping subinterval must have length greater than `min_overlap`.
+     * This follows the same logic as the default case, with some modifications:
+     *
+     * - We consider an "effective" query start as `effective_query_start = query_start + min_overlap`.
+     *   This defines the earliest entry of `subject_ends` that still could provide an overlap of at least `min_overlap`.
+     * - We perform a binary search to find the first `subject_ends` that is greater than or equal to `effective_query_start`.
+     * - Similarly, we check if `effective_query_start <= subject_starts[i]` to determine whether to skip the binary search.
+     * - We stop iteration once `query_end - subject_starts[j] < min_overlap`, after which we know that all children cannot achieve `min_overlap`.
+     * - If the length of the overlapping subinterval is less than `min_overlap`, we do not report the subject interval in `matches`.
+     *   Additionally, we skip traversal of that node's children, as the children must be smaller and will not satisfy `min_overlap` anyway. 
+     *
+     * We return early if the length of the query itself is less than `min_overlap`, as no overlap will be satisfactory.
+     *
+     * Note that we do not use an effective query end for the binary search.
+     * The comparison between query/subject ends doesn't say anything about the length of the overlap subinterval.
+     *
+     * These modifications are mostly orthogonal to those required when `max_gap > 0`, so can be combined without much effort. 
+     * We stop iterations when either of the stopping criteria for `max_gap` or `min_overlap` are satisfied.
+     * For the effective query start, the definition from `min_overlaps` will take precedence as it is more stringent, i.e., restricts more of the search space.
+     *
+     ****************************************/
+
     if (params.min_overlap > 0) {
         if (query_end - query_start < params.min_overlap) {
             return;
         }
     }
+
+    Position_ effective_query_start = query_start;
+    bool is_simple = true;
+    if (params.min_overlap > 0) {
+        constexpr Position_ maxed = std::numeric_limits<Position_>::max();
+        if (maxed - params.min_overlap < query_start) {
+            return; // No point continuing as nothing will be found in the binary search.
+        }
+        effective_query_start = query_start + params.min_overlap;
+        is_simple = false;
+    } else if (params.max_gap > 0) {
+        effective_query_start = safe_subtract_gap(query_start, params.max_gap);
+        is_simple = false;
+    }
+
+    auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
+        auto ebegin = subject.ends.begin();
+        auto estart = ebegin + children_start; 
+        auto eend = ebegin + children_end;
+        return std::lower_bound(estart, eend, effective_query_start) - ebegin;
+    };
+
+    auto skip_binary_search = [&](Position_ subject_start) -> bool {
+        return subject_start >= effective_query_start;
+    };
 
     auto is_finished = [&](Position_ subject_start) -> bool {
         if (subject_start > query_start) {
@@ -123,31 +203,6 @@ void overlaps_start(
         }
 
         return false;
-    };
-
-    Position_ effective_query_start = query_start;
-    bool is_simple = true;
-    if (params.min_overlap > 0) {
-        constexpr Position_ maxed = std::numeric_limits<Position_>::max();
-        if (maxed - params.min_overlap < query_start) {
-            return; // No point continuing as nothing will be found in the binary search.
-        }
-        effective_query_start = query_start + params.min_overlap;
-        is_simple = false;
-    } else if (params.max_gap > 0) {
-        effective_query_start = safe_subtract_gap(query_start, params.max_gap);
-        is_simple = false;
-    }
-
-    auto skip_binary_search = [&](Position_ subject_start) -> bool {
-        return subject_start >= effective_query_start;
-    };
-
-    auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
-        auto ebegin = subject.ends.begin();
-        auto estart = ebegin + children_start; 
-        auto eend = ebegin + children_end;
-        return std::lower_bound(estart, eend, effective_query_start) - ebegin;
     };
 
     Index_ root_child_at = 0;
@@ -182,8 +237,7 @@ void overlaps_start(
         auto subject_start = subject.starts[current_subject];
         auto subject_end = subject.ends[current_subject];
 
-        // Even if the current subject interval isn't a match, its children
-        // might still be okay, so we have to keep going.
+        // Even if the current subject interval isn't a match, its children might still be okay, so we have to keep going.
         bool okay;
         if (is_simple) {
             okay = (subject_start == query_start);
