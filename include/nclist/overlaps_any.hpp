@@ -9,8 +9,20 @@
 #include "build.hpp"
 #include "utils.hpp"
 
+/**
+ * @file overlaps_any.hpp
+ * @brief Find any overlaps between ranges.
+ */
+
 namespace nclist {
 
+/**
+ * @brief Workspace for `overlaps_any()`.
+ *
+ * @tparam Index_ Integer type of the subject range index.
+ *
+ * This holds intermediate data structures that can be re-used across multiple calls to `overlaps_any()` to avoid reallocations.
+ */
 template<typename Index_>
 struct OverlapsAnyWorkspace {
     /**
@@ -28,10 +40,31 @@ struct OverlapsAnyWorkspace {
      */
 };
 
+/**
+ * @brief Parameters for `overlaps_any()`.
+ * @tparam Position_ Numeric type for the start/end positions of each range.
+ */
 template<typename Position_>
 struct OverlapsAnyParameters {
+    /**
+     * Maximum gap between query and subject ranges.
+     * If the gap between a query/subject pair is less than or equal to `max_gap`, the subject will be reported in `matches` even if it does not overlap with the query.
+     * For example, if `max_gap = 0`, a subject that is exactly contiguous with the query will still be reported. 
+     * If `max_gap` has no value, only overlapping subjects will be reported.
+     * This is ignored if `min_overlap` is specified.
+     */
     std::optional<Position_> max_gap; // can't default to -1 as Position_ might be unsigned.
+
+    /**
+     * Minimum overlap between query and subject ranges.
+     * An overlap will not be reported if the length of the overlapping subrange is less than `min_overlap`.
+     */
     Position_ min_overlap = 0;
+
+    /**
+     * Whether to quit immediately upon identifying an overlap with the query range.
+     * In such cases, `matches` will contain one arbitrarily chosen subject range that overlaps with the query.
+     */
     bool quit_on_first = false;
 };
 
@@ -45,7 +78,7 @@ enum class OverlapsAnyMode : char { BASIC, MIN_OVERLAP, MAX_GAP };
 
 template<OverlapsAnyMode mode_, typename Index_, typename Position_>
 void overlaps_any_internal(
-    const Nclist<Index_, Position_>& index,
+    const Nclist<Index_, Position_>& subject,
     Position_ query_start,
     Position_ query_end,
     const OverlapsAnyParameters<Position_>& params,
@@ -53,7 +86,7 @@ void overlaps_any_internal(
     std::vector<Index_>& matches)
 {
     matches.clear();
-    if (index.root_children == 0) {
+    if (subject.root_children == 0) {
         return;
     }
     if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
@@ -112,7 +145,7 @@ void overlaps_any_internal(
     };
 
     auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
-        auto ebegin = index.ends.begin();
+        auto ebegin = subject.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
         if constexpr(mode_ == OverlapsAnyMode::BASIC) {
@@ -133,36 +166,36 @@ void overlaps_any_internal(
     };
 
     Index_ root_child_at = 0;
-    bool root_skip_search = is_query_preceding(index.starts[0]);
+    bool root_skip_search = is_query_preceding(subject.starts[0]);
     if (!root_skip_search) {
-        root_child_at = find_first_child(0, index.root_children);
+        root_child_at = find_first_child(0, subject.root_children);
     }
 
     workspace.history.clear();
     while (1) {
-        Index_ current_index;
+        Index_ current_subject;
         bool skip_search;
         if (workspace.history.empty()) {
-            if (root_child_at == index.root_children || is_finished(index.starts[root_child_at])) {
+            if (root_child_at == subject.root_children || is_finished(subject.starts[root_child_at])) {
                 break;
             }
-            current_index = root_child_at;
+            current_subject = root_child_at;
             skip_search = root_skip_search;
             ++root_child_at;
         } else {
             auto& current_state = workspace.history.back();
-            if (current_state.child_at == current_state.child_end || is_finished(index.starts[current_state.child_at])) {
+            if (current_state.child_at == current_state.child_end || is_finished(subject.starts[current_state.child_at])) {
                 workspace.history.pop_back();
                 continue;
             }
-            current_index = current_state.child_at;
+            current_subject = current_state.child_at;
             skip_search = current_state.skip_search;
             ++(current_state.child_at); // do this before the emplace_back(), otherwise the history might get reallocated and the reference would be dangling.
         }
 
-        const auto& current_node = index.nodes[current_index];
+        const auto& current_node = subject.nodes[current_subject];
         if constexpr(mode_ == OverlapsAnyMode::MIN_OVERLAP) {
-            if (std::min(query_end, index.ends[current_index]) - std::max(query_start, index.starts[current_index]) < params.min_overlap) {
+            if (std::min(query_end, subject.ends[current_subject]) - std::max(query_start, subject.starts[current_subject]) < params.min_overlap) {
                 // No point continuing with the children, as all children will by definition have smaller overlaps and cannot satisfy 'min_overlap'.
                 continue;
             }
@@ -173,7 +206,7 @@ void overlaps_any_internal(
             return;
         }
         if (current_node.duplicates_start != current_node.duplicates_end) {
-            matches.insert(matches.end(), index.duplicates.begin() + current_node.duplicates_start, index.duplicates.begin() + current_node.duplicates_end);
+            matches.insert(matches.end(), subject.duplicates.begin() + current_node.duplicates_start, subject.duplicates.begin() + current_node.duplicates_end);
         }
 
         if (current_node.children_start != current_node.children_end) {
@@ -182,7 +215,7 @@ void overlaps_any_internal(
             } else {
                 Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
                 if (start_pos != current_node.children_end) {
-                    workspace.history.emplace_back(start_pos, current_node.children_end, is_query_preceding(index.starts[start_pos]));
+                    workspace.history.emplace_back(start_pos, current_node.children_end, is_query_preceding(subject.starts[start_pos]));
                 }
             }
         }
@@ -192,21 +225,36 @@ void overlaps_any_internal(
  * @endcond
  */
 
+/**
+ * Find subject ranges that exhibit any overlap with the query range. 
+ *
+ * @tparam Index_ Integer type of the subject range index.
+ * @tparam Position_ Numeric type for the start/end positions of each range.
+ *
+ * @param subject An `Nclist` of subject ranges, typically built with `build()`. 
+ * @param query_start Start of the query range.
+ * @param query_end Non-inclusive end of the query range.
+ * @param params Parameters for the search.
+ * @param workspace Workspace for intermediate data structures.
+ * This can be default-constructed and re-used across `overlaps_any()` calls.
+ * @param[out] matches On output, vector of subject range indices that overlap with the query range.
+ * Indices are reported in arbitrary order.
+ */
 template<typename Index_, typename Position_>
 void overlaps_any(
-    const Nclist<Index_, Position_>& index,
+    const Nclist<Index_, Position_>& subject,
     Position_ query_start,
     Position_ query_end,
     const OverlapsAnyParameters<Position_>& params,
     OverlapsAnyWorkspace<Index_>& workspace,
     std::vector<Index_>& matches)
 {
-    if (params.max_gap.has_value()) {
-        overlaps_any_internal<OverlapsAnyMode::MAX_GAP>(index, query_start, query_end, params, workspace, matches);
-    } else if (params.min_overlap) {
-        overlaps_any_internal<OverlapsAnyMode::MIN_OVERLAP>(index, query_start, query_end, params, workspace, matches);
+    if (params.min_overlap) {
+        overlaps_any_internal<OverlapsAnyMode::MIN_OVERLAP>(subject, query_start, query_end, params, workspace, matches);
+    } else if (params.max_gap.has_value()) {
+        overlaps_any_internal<OverlapsAnyMode::MAX_GAP>(subject, query_start, query_end, params, workspace, matches);
     } else {
-        overlaps_any_internal<OverlapsAnyMode::BASIC>(index, query_start, query_end, params, workspace, matches);
+        overlaps_any_internal<OverlapsAnyMode::BASIC>(subject, query_start, query_end, params, workspace, matches);
     }
 }
 

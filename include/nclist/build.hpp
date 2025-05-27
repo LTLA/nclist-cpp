@@ -8,8 +8,21 @@
 #include <numeric>
 #include <limits>
 
+/**
+ * @file build.hpp
+ * @brief Build a nested containment list.
+ */
+
 namespace nclist {
 
+/**
+ * @brief Pre-built nested containment list.
+ *
+ * @tparam Index_ Integer type of the subject range index.
+ * @tparam Position_ Numeric type for the start/end positions of each range.
+ *
+ * Instances of an `Nclist` are usually created by `build()`.
+ */
 template<typename Index_, typename Position_>
 struct Nclist {
 /**
@@ -46,14 +59,14 @@ struct Nclist {
  * @cond
  */
 template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, const Position_* start, const Position_* end) {
+Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, const Position_* starts, const Position_* ends) {
     // We want to sort by increasing start but DECREASING end, so that the
     // children sort after their parents. 
-    std::sort(subset, subset + num_ranges, [&](Index_ l, Index_ r) -> bool {
-        if (start[l] == start[r]) {
-            return end[l] > end[r];
+    std::sort(subset, subset + num_subset, [&](Index_ l, Index_ r) -> bool {
+        if (starts[l] == starts[r]) {
+            return ends[l] > ends[r];
         } else {
-            return start[l] < start[r];
+            return starts[l] < starts[r];
         }
     });
 
@@ -63,7 +76,7 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
     // and I don't want to use a unique_ptr here.
     // 
     // Also note that all offsets can be represented as Index_ as they point
-    // into 'working_contents', which can be no longer than 'num_ranges'.
+    // into 'working_contents', which can be no longer than 'num_subset'.
     struct WorkingNode {
         WorkingNode() = default;
         WorkingNode(Index_ id) : id(id) {}
@@ -73,7 +86,7 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
     };
     WorkingNode top_level;
     std::vector<WorkingNode> working_contents;
-    working_contents.reserve(num_ranges);
+    working_contents.reserve(num_subset);
 
     struct StackElement {
         StackElement() = default;
@@ -85,9 +98,9 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
 
     Position_ last_start = 0, last_end = 0;
     Index_ num_duplicates = 0;
-    for (Index_ r = 0; r < num_ranges; ++r) {
+    for (Index_ r = 0; r < num_subset; ++r) {
         auto curid = subset[r];
-        auto curend = end[curid], curstart = start[curid];
+        auto curend = ends[curid], curstart = starts[curid];
 
         // Special handling of duplicate intervals.
         if (r && last_start == curstart && last_end == curend) {
@@ -122,8 +135,8 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
         for (auto work_index : working_child_indices) {
             const auto& working_child_node = working_contents[work_index];
             auto child_id = working_child_node.id;
-            output.starts.push_back(start[child_id]);
-            output.ends.push_back(end[child_id]);
+            output.starts.push_back(starts[child_id]);
+            output.ends.push_back(ends[child_id]);
 
             output.nodes.emplace_back(child_id);
             auto& output_child_node = output.nodes.back(); 
@@ -180,17 +193,39 @@ Nclist<Index_, Position_> build_internal(Index_ num_ranges, Index_* subset, cons
  * @endcond
  */
 
+/**
+ * @tparam Index_ Integer type of the subject range index.
+ * @tparam Position_ Numeric type for the start/end positions of each range.
+ * @param num_subset Number of subject ranges in the subset to include in the `Nclist`.
+ * @param[in] subset Pointer to an array of length equal to `num_subset`, containing the subset of subject ranges to include in the NCList.
+ * @param[in] starts Pointer to an array containing the start positions of all subject ranges.
+ * This should be long enough to be addressable by any elements in `[subset, subset + num_subset)`.
+ * @param[in] ends Pointer to an array containing the end positions of all subject ranges.
+ * This should have the same length as the array pointed to by `starts`, where the `i`-th subject range is defined as `[starts[i], ends[i])`.
+ * Note the non-inclusive nature of the end positions.
+ * @return A `Nclist` containing the specified subset of subject ranges.
+ */
 template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build(Index_ num_ranges, const Index_* subset, const Position_* start, const Position_* end) {
-    std::vector<Index_> copy(subset, subset + num_ranges);
-    return build_internal(num_ranges, copy.data(), start, end);
+Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const Position_* starts, const Position_* ends) {
+    std::vector<Index_> copy(subset, subset + num_subset);
+    return build_internal(num_subset, copy.data(), starts, ends);
 }
 
+/**
+ * @tparam Index_ Integer type of the subject range index.
+ * @tparam Position_ Numeric type for the start/end position of each range.
+ * @param num_ranges Number of subject ranges to include in the NCList.
+ * @param[in] starts Pointer to an array of length `num_ranges`, containing the start positions of all subject ranges.
+ * @param[in] ends Pointer to an array of length `num_ranges`, containing the end positions of all subject ranges.
+ * The `i`-th subject range is defined as `[starts[i], ends[i])`. 
+ * Note the non-inclusive nature of the end positions.
+ * @return A `Nclist` containing all subject ranges.
+ */
 template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build(Index_ num_ranges, const Position_* start, const Position_* end) {
+Nclist<Index_, Position_> build(Index_ num_ranges, const Position_* starts, const Position_* ends) {
     std::vector<Index_> copy(num_ranges);
     std::iota(copy.begin(), copy.end(), static_cast<Index_>(0));
-    return build_internal(num_ranges, copy.data(), start, end);
+    return build_internal(num_ranges, copy.data(), starts, ends);
 }
 
 }

@@ -9,8 +9,20 @@
 #include "build.hpp"
 #include "utils.hpp"
 
+/**
+ * @file overlaps_end.hpp
+ * @brief Find ranges with the same end position.
+ */
+
 namespace nclist {
 
+/**
+ * @brief Workspace for `overlaps_end()`.
+ *
+ * @tparam Index_ Integer type of the subject range index.
+ *
+ * This holds intermediate data structures that can be re-used across multiple calls to `overlaps_end()` to avoid reallocations.
+ */
 template<typename Index_>
 struct OverlapsEndWorkspace {
     /**
@@ -27,16 +39,49 @@ struct OverlapsEndWorkspace {
      */
 };
 
+/**
+ * @brief Parameters for `overlaps_end()`.
+ * @tparam Position_ Numeric type for the start/end positions of each range.
+ */
 template<typename Position_>
 struct OverlapsEndParameters {
+    /**
+     * Maximum gap between the ends of the query and subject ranges.
+     * An overlap is reported between a query/subject pair if the gap is equal to or less than `max_gap`.
+     */
     Position_ max_gap = 0;
+
+    /**
+     * Minimum overlap between query and subject ranges.
+     * An overlap will not be reported if the length of the overlapping subrange is less than `min_overlap`.
+     */
     Position_ min_overlap = 0;
+
+    /**
+     * Whether to quit immediately upon identifying an overlap with the query range.
+     * In such cases, `matches` will contain one arbitrarily chosen subject range that overlaps with the query.
+     */
     bool quit_on_first = false;
 };
 
+/**
+ * Find subject ranges with the same end position as the query range.
+ *
+ * @tparam Index_ Integer type of the subject range index.
+ * @tparam Position_ Numeric type for the start/end positions of each range.
+ *
+ * @param subject An `Nclist` of subject ranges, typically built with `build()`. 
+ * @param query_start Start of the query range.
+ * @param query_end Non-inclusive end of the query range.
+ * @param params Parameters for the search.
+ * @param workspace Workspace for intermediate data structures.
+ * This can be default-constructed and re-used across `overlaps_end()` calls.
+ * @param[out] matches On output, vector of subject range indices that overlap with the query range.
+ * Indices are reported in arbitrary order.
+ */
 template<typename Index_, typename Position_>
 void overlaps_end(
-    const Nclist<Index_, Position_>& index,
+    const Nclist<Index_, Position_>& subject,
     Position_ query_start,
     Position_ query_end,
     const OverlapsEndParameters<Position_>& params,
@@ -44,7 +89,7 @@ void overlaps_end(
     std::vector<Index_>& matches)
 {
     matches.clear();
-    if (index.root_children == 0) {
+    if (subject.root_children == 0) {
         return;
     }
     if (params.min_overlap > 0) {
@@ -80,36 +125,36 @@ void overlaps_end(
     }
 
     auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
-        auto ebegin = index.ends.begin();
+        auto ebegin = subject.ends.begin();
         auto estart = ebegin + children_start; 
         auto eend = ebegin + children_end;
         return std::lower_bound(estart, eend, effective_query_end) - ebegin;
     };
 
-    Index_ root_child_at = find_first_child(0, index.root_children);
+    Index_ root_child_at = find_first_child(0, subject.root_children);
 
     workspace.history.clear();
     while (1) {
-        Index_ current_index;
+        Index_ current_subject;
         if (workspace.history.empty()) {
-            if (root_child_at == index.root_children || is_finished(index.starts[root_child_at])) {
+            if (root_child_at == subject.root_children || is_finished(subject.starts[root_child_at])) {
                 break;
             }
-            current_index = root_child_at;
+            current_subject = root_child_at;
             ++root_child_at;
         } else {
             auto& current_state = workspace.history.back();
-            if (current_state.child_at == current_state.child_end || is_finished(index.starts[current_state.child_at])) {
+            if (current_state.child_at == current_state.child_end || is_finished(subject.starts[current_state.child_at])) {
                 workspace.history.pop_back();
                 continue;
             }
-            current_index = current_state.child_at;
+            current_subject = current_state.child_at;
             ++(current_state.child_at); // do this before the emplace_back(), otherwise the history might get reallocated and the reference would be dangling.
         }
 
-        const auto& current_node = index.nodes[current_index];
-        auto subject_start = index.starts[current_index];
-        auto subject_end = index.ends[current_index];
+        const auto& current_node = subject.nodes[current_subject];
+        auto subject_start = subject.starts[current_subject];
+        auto subject_end = subject.ends[current_subject];
 
         if (params.min_overlap > 0) {
             auto common_end = std::min(subject_end, query_end);
@@ -135,7 +180,7 @@ void overlaps_end(
                 return;
             }
             if (current_node.duplicates_start != current_node.duplicates_end) {
-                matches.insert(matches.end(), index.duplicates.begin() + current_node.duplicates_start, index.duplicates.begin() + current_node.duplicates_end);
+                matches.insert(matches.end(), subject.duplicates.begin() + current_node.duplicates_start, subject.duplicates.begin() + current_node.duplicates_end);
             }
         }
 
