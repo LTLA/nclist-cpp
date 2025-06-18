@@ -70,13 +70,16 @@ struct Nclist {
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, const Position_* starts, const Position_* ends) {
     // We want to sort by increasing start but DECREASING end, so that the children sort after their parents. 
-    std::sort(subset, subset + num_subset, [&](Index_ l, Index_ r) -> bool {
+    auto cmp = [&](Index_ l, Index_ r) -> bool {
         if (starts[l] == starts[r]) {
             return ends[l] > ends[r];
         } else {
             return starts[l] < starts[r];
         }
-    });
+    };
+    if (!std::is_sorted(subset, subset + num_subset, cmp)) {
+        std::sort(subset, subset + num_subset, cmp);
+    }
 
     struct WorkingNode {
         WorkingNode() = default;
