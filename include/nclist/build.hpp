@@ -68,29 +68,40 @@ struct Nclist {
  * @cond
  */
 template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, const Position_* starts, const Position_* ends) {
+struct Triplet {
+    Triplet() = default;
+    Triplet(Index_ id, Position_ start, Position_ end) : id(id), start(start), end(end) {}
+    Index_ id;
+    Position_ start, end;
+};
+
+template<typename Index_, typename Position_>
+Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> > intervals) {
     // We want to sort by increasing start but DECREASING end, so that the children sort after their parents. 
-    auto cmp = [&](Index_ l, Index_ r) -> bool {
-        if (starts[l] == starts[r]) {
-            return ends[l] > ends[r];
+    auto cmp = [&](const Triplet<Index_, Position_>& l, const Triplet<Index_, Position_>& r) -> bool {
+        if (l.start == r.start) {
+            return l.end > r.end;
         } else {
-            return starts[l] < starts[r];
+            return l.start < r.start;
         }
     };
-    if (!std::is_sorted(subset, subset + num_subset, cmp)) {
-        std::sort(subset, subset + num_subset, cmp);
+    if (!std::is_sorted(intervals.begin(), intervals.end(), cmp)) {
+        std::sort(intervals.begin(), intervals.end(), cmp);
     }
 
     struct WorkingNode {
         WorkingNode() = default;
-        WorkingNode(Index_ id) : id(id) {}
+        WorkingNode(Index_ id, Position_ start, Position_ end) : id(id), start(start), end(end) {}
 
         // Index of the interval, i.e., one of the elements of `subset`.
         // We set the default to the max to avoid confusion when debugging.
         Index_ id = std::numeric_limits<Index_>::max();
 
+        // Start and end of the interval, obviously.
+        Position_ start, end;
+
         // Each child is represented as an offset into `working_list`.
-        // All offsets can be represented as Index_ as they point into `working_list`, which can be no longer than `num_subset`.
+        // All offsets can be represented as Index_ as they point into `working_list`, which can be no longer than `data.size()`.
         std::vector<Index_> children;
 
         // Duplicate intervals with the same coordinates as `id`.
@@ -98,7 +109,8 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
     };
     WorkingNode top_node;
     std::vector<WorkingNode> working_list;
-    working_list.reserve(num_subset);
+    auto num_intervals = intervals.size();
+    working_list.reserve(num_intervals);
 
     struct Level {
         Level() = default;
@@ -110,15 +122,19 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
 
     Position_ last_start = 0, last_end = 0;
     Index_ num_duplicates = 0;
-    for (Index_ r = 0; r < num_subset; ++r) {
-        auto curid = subset[r];
-        auto curend = ends[curid], curstart = starts[curid];
+    for (decltype(num_intervals) i = 0; i < num_intervals; ++i) {
+        const auto& interval = intervals[i];
+        auto curid = interval.id;
+        auto curstart = interval.start;
+        auto curend = interval.end;
 
         // Special handling of duplicate intervals.
-        if (r && last_start == curstart && last_end == curend) {
-            working_list[levels.back().offset].duplicates.push_back(curid);
-            ++num_duplicates;
-            continue;
+        if (last_start == curstart && last_end == curend) {
+            if (i > 0) {
+                working_list[levels.back().offset].duplicates.push_back(curid);
+                ++num_duplicates;
+                continue;
+            }
         }
 
         while (!levels.empty() && levels.back().end < curend) {
@@ -127,12 +143,16 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
         auto& landing_node = (levels.empty() ? top_node : working_list[levels.back().offset]); 
 
         auto used = working_list.size();
-        working_list.emplace_back(curid);
+        working_list.emplace_back(curid, curstart, curend);
         landing_node.children.push_back(used); 
         levels.emplace_back(used, curend);
         last_start = curstart;
         last_end = curend;
     }
+
+    // Freeing up some memory now that we're done with this.
+    intervals.clear();
+    intervals.shrink_to_fit();
 
     // We convert the `working_list` into the output format where the children's start/end coordinates are laid out contiguously.
     // This should make for an easier binary search and improve cache locality.
@@ -151,8 +171,8 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
             // Starts and ends are guaranteed to be sorted for all children of a given node.
             // Obviously we already sorted in order of increasing starts, and interval indices were added to each `WorkingNode::children` vector in that order.
             // For the ends, this is less obvious but any ends that are equal to or less than the previous end should be a child of that previous interval, and so would not show up here.
-            output.starts.push_back(starts[child_id]);
-            output.ends.push_back(ends[child_id]);
+            output.starts.push_back(working_child_node.start);
+            output.ends.push_back(working_child_node.end);
 
             output.nodes.emplace_back(child_id);
             auto& output_child_node = output.nodes.back(); 
@@ -224,8 +244,12 @@ Nclist<Index_, Position_> build_internal(Index_ num_subset, Index_* subset, cons
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const Position_* starts, const Position_* ends) {
-    std::vector<Index_> copy(subset, subset + num_subset);
-    return build_internal(num_subset, copy.data(), starts, ends);
+    std::vector<Triplet<Index_, Position_> > intervals;
+    intervals.reserve(num_subset);
+    for (Index_ s = 0; s < num_subset; ++s) {
+        intervals.emplace_back(subset[s], starts[s], ends[s]);
+    }
+    return build_internal(std::move(intervals));
 }
 
 /**
@@ -240,9 +264,12 @@ Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const P
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build(Index_ num_intervals, const Position_* starts, const Position_* ends) {
-    std::vector<Index_> copy(num_intervals);
-    std::iota(copy.begin(), copy.end(), static_cast<Index_>(0));
-    return build_internal(num_intervals, copy.data(), starts, ends);
+    std::vector<Triplet<Index_, Position_> > intervals;
+    intervals.reserve(num_intervals);
+    for (Index_ i = 0; i < num_intervals; ++i) {
+        intervals.emplace_back(i, starts[i], ends[i]);
+    }
+    return build_internal(std::move(intervals));
 }
 
 }
