@@ -77,6 +77,14 @@ struct Triplet {
     Position_ start, end;
 };
 
+template<class Container_, typename Size_>
+void safe_resize(Container_& container, Size_ size) {
+    container.resize(size);
+    if (size != container.size()) {
+        throw std::runtime_error("failed to resize container to specified size");
+    }
+}
+
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> > intervals) {
     // We want to sort by increasing start but DECREASING end, so that the children sort after their parents. 
@@ -102,59 +110,81 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
     std::vector<Position_> working_start, working_end;
     working_start.reserve(num_intervals);
     working_end.reserve(num_intervals);
+
     std::vector<Index_> working_children;
-    working_children.reserve(num_intervals); // splurge a bit of memory here and for duplicates to avoid reallocations.
+    safe_resize(working_children, num_intervals);
+    Index_ children_used = 0;
     std::vector<Index_> working_duplicates;
-    working_duplicates.reserve(num_intervals);
+    safe_resize(working_duplicates, num_intervals);
+    Index_ duplicates_used = 0;
 
     struct Level {
         Level() = default;
         Level(Index_ offset, Position_ end) : offset(offset), end(end) {}
         Index_ offset; // offset into `working_list`
         Position_ end; // storing the end coordinate for better cache locality.
-        std::vector<Index_> children, duplicates;
+        Index_ children_start_temp;
+        Index_ children_end_temp;
+        Index_ duplicates_start_temp;
+        Index_ duplicates_end_temp;
     };
+
     std::vector<Level> levels(1);
-    decltype(levels.size()) in_use = 0;
+    {
+        auto& first = levels.front();
+        first.children_start_temp = num_intervals;
+        first.children_end_temp = num_intervals;
+        first.duplicates_start_temp = num_intervals;
+        first.duplicates_end_temp = num_intervals;
+    }
+
+    // Once we no longer need a level, we can't add to its children or duplicates;
+    // so we can safely shift them to the left side of the 'working_children' and 'working_duplicates'.
+    // This allows us to reuse the right side of the children and duplicates vectors for the next level.
+    auto process_level = [&](const Level& curlevel) -> void {
+        auto& original_node = working_list[curlevel.offset];
+
+        if (curlevel.children_start_temp < curlevel.children_end_temp) {
+            original_node.children_start = children_used;
+            Index_ len = curlevel.children_end_temp - curlevel.children_start_temp;
+            if (curlevel.children_start_temp > children_used) { // protect the copy.
+                std::copy_n(working_children.begin() + curlevel.children_start_temp, len, working_children.begin() + children_used);
+            }
+            children_used += len;
+            original_node.children_end = children_used;
+        }
+
+        if (curlevel.duplicates_start_temp < curlevel.duplicates_end_temp) {
+            original_node.duplicates_start = duplicates_used;
+            Index_ len = curlevel.duplicates_end_temp - curlevel.duplicates_start_temp;
+            if (curlevel.duplicates_start_temp > duplicates_used) { // protect the copy.
+                std::copy_n(working_duplicates.begin() + curlevel.duplicates_start_temp, len, working_duplicates.begin() + duplicates_used);
+            }
+            duplicates_used += len;
+            original_node.duplicates_end = duplicates_used;
+        }
+    };
 
     Position_ last_start = 0, last_end = 0;
-    for (decltype(num_intervals) i = 0; i < num_intervals; ++i) {
-        const auto& interval = intervals[i];
+    for (const auto& interval : intervals) {
         auto curid = interval.id;
         auto curstart = interval.start;
         auto curend = interval.end;
 
         // Special handling of duplicate intervals.
         if (last_start == curstart && last_end == curend) {
-            if (i > 0) {
-                levels[in_use].duplicates.push_back(curid); // in_use must be >0 at this point.
+            if (levels.size() > 1) { // i.e., we're past the start.
+                auto& parent_duplicates_pos = levels.back().duplicates_start_temp;
+                --parent_duplicates_pos;
+                working_duplicates[parent_duplicates_pos] = curid;
                 continue;
             }
         }
 
-        while (in_use > 0 && levels[in_use].end == curend) {
-            auto& curlevel = levels[in_use];
-            auto& original_node = working_list[curlevel.offset];
-            
-            // Once we no longer need a level, we can't add to its children or duplicates;
-            // so we can safely shift these to the global 'working_children' and 'working_duplicates'.
-            // This allows us to reuse the children and duplicates vectors for the next level.
-            if (!curlevel.children.empty()) {
-                original_node.children_start = working_children.size();
-                working_children.insert(working_children.end(), curlevel.children.begin(), curlevel.children.end());
-                original_node.children_end = working_children.size();
-                curlevel.children.clear();
-            }
-
-            if (!curlevel.duplicates.empty()) {
-                original_node.duplicates_start = working_duplicates.size();
-                working_duplicates.insert(working_duplicates.end(), curlevel.duplicates.begin(), curlevel.duplicates.end());
-                original_node.duplicates_end = working_duplicates.size();
-                curlevel.duplicates.clear();
-            }
-
-            // Don't pop_back() so that we can reuse the already-allocated memory for children and duplicates.
-            --in_use;
+        while (levels.size() > 1 && levels.back().end < curend) {
+            const auto& curlevel = levels.back();
+            process_level(curlevel);
+            levels.pop_back();
         }
 
         auto used = working_list.size();
@@ -162,20 +192,30 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         working_start.push_back(curstart);
         working_end.push_back(curend);
 
-        levels[in_use].children.push_back(used);
-        ++in_use;
-        if (in_use == levels.size()) {
-            levels.emplace_back(used, curend);
-        } else {
-            levels[in_use].offset = used;
-            levels[in_use].end = curend;
-        }
+        auto parent_children_pos = levels.back().children_start_temp;
+        auto parent_duplicates_pos = levels.back().duplicates_start_temp;
+        --parent_children_pos;
+        working_children[parent_children_pos] = used;
+        levels.back().children_start_temp = parent_children_pos;
+
+        levels.emplace_back(used, curend);
+        auto& latest = levels.back();
+        latest.children_start_temp = parent_children_pos;
+        latest.children_end_temp = parent_children_pos;
+        latest.duplicates_start_temp = parent_duplicates_pos;
+        latest.duplicates_end_temp = parent_duplicates_pos;
 
         last_start = curstart;
         last_end = curend;
     }
 
-    intervals.clear();
+    while (levels.size() > 1) { // processing all remaining levels except for the root node, which we'll handle separately.
+        const auto& curlevel = levels.back();
+        process_level(curlevel);
+        levels.pop_back();
+    }
+
+    intervals.clear(); // freeing up some memory for more allocations in the next section.
     intervals.shrink_to_fit();
 
 //    t2 = std::chrono::high_resolution_clock::now();
@@ -185,31 +225,41 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
 
     // We convert the `working_list` into the output format where the children's start/end coordinates are laid out contiguously.
     // This should make for an easier binary search and improve cache locality.
+    // We do this by traversing the tree, adding all immediate children at each node, and then proceeding to the next node.
     Nclist<Index_, Position_> output;
     output.nodes.reserve(working_list.size());
     output.starts.reserve(working_list.size());
     output.ends.reserve(working_list.size());
-    output.duplicates.reserve(working_duplicates.size());
+    output.duplicates.reserve(duplicates_used);
 
-    // Processing the root node. The node itself doesn't have any duplicates so we only consider the 'children' field.
-    for (auto child : levels.front().children) {
-        output.nodes.push_back(working_list[child]);
-        output.starts.push_back(working_start[child]);
-        output.ends.push_back(working_end[child]);
+    auto process_children = [&](Index_ from, Index_ to) -> void {
+        // Remember that we inserted children and duplicates in reverse order into their working vectors.
+        // So when we copy, we do so in reverse order to cancel out the reversal.
+        for (Index_ i = to; i > from; --i) {
+            auto child = working_children[i - 1];
+            output.nodes.push_back(working_list[child]);
+            output.starts.push_back(working_start[child]);
+            output.ends.push_back(working_end[child]);
 
-        auto& current = output.nodes.back();
-        if (current.duplicates_start != current.duplicates_end) {
-            auto old_start = current.duplicates_start, old_end = current.duplicates_end;
-            current.duplicates_start = output.duplicates.size();
-            output.duplicates.insert(output.duplicates.end(), working_duplicates.begin() + old_start, working_duplicates.begin() + old_end);
-            current.duplicates_end = output.duplicates.size();
+            auto& current = output.nodes.back();
+            if (current.duplicates_start != current.duplicates_end) {
+                auto old_start = current.duplicates_start, old_end = current.duplicates_end;
+                current.duplicates_start = output.duplicates.size();
+                output.duplicates.insert(
+                    output.duplicates.end(),
+                    working_duplicates.rbegin() + (num_intervals - old_end),
+                    working_duplicates.rbegin() + (num_intervals - old_start)
+                );
+                current.duplicates_end = output.duplicates.size();
+            }
         }
-    }
-    output.root_children = output.nodes.size();
-    levels.clear();
-    levels.shrink_to_fit();
+    };
 
-    // Performing a depth-first search that does two passes for each node; once to put it in `Nclist::nodes`, and another to set its `children_start` and `children_end`.
+    // Processing the root node here, to avoid an unnecessary extra shift within working_children.
+    // Note that root node doesn't have any duplicates so we only need to consider its children during processing.
+    process_children(levels.front().children_start_temp, levels.front().children_end_temp);
+    output.root_children = output.nodes.size();
+
     Index_ root_progress = 0;
     std::vector<std::pair<Index_, Index_> > history;
     while (1) {
@@ -235,21 +285,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         if (old_start != old_end) {
             Index_ first_child = output.nodes.size();
             output.nodes[current_output_index].children_start = first_child;
-
-            for (auto child_idx = old_start; child_idx < old_end; ++child_idx) {
-                output.nodes.push_back(working_list[child_idx]);
-                output.starts.push_back(working_start[child_idx]);
-                output.ends.push_back(working_end[child_idx]);
-
-                auto& current = output.nodes.back();
-                if (current.duplicates_start != current.duplicates_end) {
-                    auto old_start = current.duplicates_start, old_end = current.duplicates_end;
-                    current.duplicates_start = output.duplicates.size();
-                    output.duplicates.insert(output.duplicates.end(), working_duplicates.begin() + old_start, working_duplicates.begin() + old_end);
-                    current.duplicates_end = output.duplicates.size();
-                }
-            }
-
+            process_children(old_start, old_end);
             Index_ past_last_child = output.nodes.size();
             output.nodes[current_output_index].children_end = past_last_child;
             history.emplace_back(first_child, past_last_child);
