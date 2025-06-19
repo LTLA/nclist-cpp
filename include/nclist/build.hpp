@@ -111,6 +111,24 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
     working_start.reserve(num_intervals);
     working_end.reserve(num_intervals);
 
+    // This section deserves some explanation.
+    // For each node in the list, we need to track its children.
+    // This is most easily done by allocating a vector per node, but that is very time-consuming when we have millions of nodes.
+    //
+    // Instead, we recognize that the number of child indices is no greater than the number of intervals (as each interval must only have one parent).
+    // We allocate a 'working_children' vector of length equal to the number of intervals.
+    // The left side of the vector contains the already-processed child indices, while the right side contains the currently-processed indices.
+    // The aim is to store all children in a single memory allocation that can be easily freed.
+    //
+    // At each level, we add child indices to the right side of the vector, moving in torwards the center.
+    // Once we move past a level (i.e., we discard it from 'history'), we shift its indices from the right to the left, as no more children will be added.
+    // We will always have space to perform the left shift as we know the upper bound on the number of child indices.
+    // This move also exposes the indices of that level's parent on the right of the vector, allowing for further addition of new children to that parent.
+    //
+    // A quirk of this approach is that, because we add on the right towards the center, the children are stored in reverse order of addition.
+    // This requires some later work to undo this, to report the correct order for binary search.
+    //
+    // We use the same approach for duplicates.
     std::vector<Index_> working_children;
     safe_resize(working_children, num_intervals);
     Index_ children_used = 0;
@@ -138,16 +156,13 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         first.duplicates_end_temp = num_intervals;
     }
 
-    // Once we no longer need a level, we can't add to its children or duplicates;
-    // so we can safely shift them to the left side of the 'working_children' and 'working_duplicates'.
-    // This allows us to reuse the right side of the children and duplicates vectors for the next level.
     auto process_level = [&](const Level& curlevel) -> void {
         auto& original_node = working_list[curlevel.offset];
 
         if (curlevel.children_start_temp < curlevel.children_end_temp) {
             original_node.children_start = children_used;
             Index_ len = curlevel.children_end_temp - curlevel.children_start_temp;
-            if (curlevel.children_start_temp > children_used) { // protect the copy.
+            if (curlevel.children_start_temp > children_used) { // protect the copy, though this should only be hit at the very end of the traversal.
                 std::copy_n(working_children.begin() + curlevel.children_start_temp, len, working_children.begin() + children_used);
             }
             children_used += len;
@@ -157,7 +172,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         if (curlevel.duplicates_start_temp < curlevel.duplicates_end_temp) {
             original_node.duplicates_start = duplicates_used;
             Index_ len = curlevel.duplicates_end_temp - curlevel.duplicates_start_temp;
-            if (curlevel.duplicates_start_temp > duplicates_used) { // protect the copy.
+            if (curlevel.duplicates_start_temp > duplicates_used) { // protect the copy, though this should only be hit at the very end of the traversal.
                 std::copy_n(working_duplicates.begin() + curlevel.duplicates_start_temp, len, working_duplicates.begin() + duplicates_used);
             }
             duplicates_used += len;
@@ -224,8 +239,8 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
 //    t1 = std::chrono::high_resolution_clock::now();
 
     // We convert the `working_list` into the output format where the children's start/end coordinates are laid out contiguously.
-    // This should make for an easier binary search and improve cache locality.
-    // We do this by traversing the tree, adding all immediate children at each node, and then proceeding to the next node.
+    // This should make for an easier binary search (allowing us to use std::lower_bound and friends) and improve cache locality.
+    // We do this by traversing the list in a depth-first manner and adding all children of each node to the output vectors.
     Nclist<Index_, Position_> output;
     output.nodes.reserve(working_list.size());
     output.starts.reserve(working_list.size());
@@ -256,7 +271,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
     };
 
     // Processing the root node here, to avoid an unnecessary extra shift within working_children.
-    // Note that root node doesn't have any duplicates so we only need to consider its children during processing.
+    // Note that root node doesn't have any duplicates so we only need to consider its children here.
     process_children(levels.front().children_start_temp, levels.front().children_end_temp);
     output.root_children = output.nodes.size();
 
