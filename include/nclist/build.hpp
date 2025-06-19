@@ -242,72 +242,71 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
     // This should make for an easier binary search (allowing us to use std::lower_bound and friends) and improve cache locality.
     // We do this by traversing the list in a depth-first manner and adding all children of each node to the output vectors.
     Nclist<Index_, Position_> output;
-    output.nodes.reserve(working_list.size());
-    output.starts.reserve(working_list.size());
-    output.ends.reserve(working_list.size());
+    safe_resize(output.nodes, working_list.size());
+    safe_resize(output.starts, working_list.size());
+    safe_resize(output.ends, working_list.size());
     output.duplicates.reserve(duplicates_used);
 
-    auto process_children = [&](Index_ from, Index_ to) -> void {
-        // Remember that we inserted children and duplicates in reverse order into their working vectors.
-        // So when we copy, we do so in reverse order to cancel out the reversal.
-        for (Index_ i = to; i > from; --i) {
-            auto child = working_children[i - 1];
-            output.nodes.push_back(working_list[child]);
-
-            // Starts and ends are guaranteed to be sorted for all children of a given node (after we cancel out the reversal).
-            // Obviously we already sorted in order of increasing starts, and interval indices were added to each node's children in that order.
-            // For the ends, this is less obvious but any end that is equal to or less than the previous end should be a child of that previous interval and should not show up here.
-            output.starts.push_back(working_start[child]);
-            output.ends.push_back(working_end[child]);
-
-            auto& current = output.nodes.back();
-            if (current.duplicates_start != current.duplicates_end) {
-                auto old_start = current.duplicates_start, old_end = current.duplicates_end;
-                current.duplicates_start = output.duplicates.size();
-                output.duplicates.insert(
-                    output.duplicates.end(),
-                    working_duplicates.rbegin() + (num_intervals - old_end),
-                    working_duplicates.rbegin() + (num_intervals - old_start)
-                );
-                current.duplicates_end = output.duplicates.size();
-            }
-        }
+    struct Level2 {
+        Level2() = default;
+        Level2(Index_ working_at, Index_ working_start, Index_ output_offset) : working_at(working_at), working_start(working_start), output_offset(output_offset) {}
+        Index_ working_at;
+        Index_ working_start;
+        Index_ output_offset;
     };
+    std::vector<Level2> history;
 
-    // Processing the root node here, to avoid an unnecessary extra shift within working_children.
-    // Note that root node doesn't have any duplicates so we only need to consider its children here.
-    process_children(levels.front().children_start_temp, levels.front().children_end_temp);
-    output.root_children = output.nodes.size();
+    auto root_children_start = levels.front().children_start_temp;
+    auto root_children_end = levels.front().children_end_temp;
+    output.root_children = root_children_end - root_children_start;
+    Index_ output_children_used = output.root_children;
+    history.emplace_back(root_children_end, root_children_start, 0);
 
-    Index_ root_progress = 0;
-    std::vector<std::pair<Index_, Index_> > history;
     while (1) {
-        Index_ current_output_index;
-        if (history.empty()) {
-            if (root_progress == output.root_children) {
+        auto& current_state = history.back();
+        if (current_state.working_at == current_state.working_start) {
+            history.pop_back();
+            if (history.empty()) {
                 break;
-            }
-            current_output_index = root_progress;
-            ++root_progress;
-        } else {
-            auto& current_state = history.back();
-            if (current_state.first == current_state.second) {
-                history.pop_back();
+            } else {
                 continue;
             }
-            current_output_index = current_state.first;
-            ++(current_state.first); // do this before the emplace_back(), otherwise the history might get reallocated and the reference would be dangling.
         }
 
-        auto old_start = output.nodes[current_output_index].children_start;
-        auto old_end = output.nodes[current_output_index].children_end;
-        if (old_start != old_end) {
-            Index_ first_child = output.nodes.size();
-            output.nodes[current_output_index].children_start = first_child;
-            process_children(old_start, old_end);
-            Index_ past_last_child = output.nodes.size();
-            output.nodes[current_output_index].children_end = past_last_child;
-            history.emplace_back(first_child, past_last_child);
+        // Remember that we inserted children and duplicates in reverse order into their working vectors.
+        // So when we copy, we do so in reverse order to cancel out the reversal, hence the decrement here.
+        --(current_state.working_at);
+        auto current_working_at = current_state.working_at;
+        auto current_output_offset = current_state.output_offset;
+        ++(current_state.output_offset); // do all modifications to current_state before the emplace_back(), otherwise the history might get reallocated and the reference would be dangling.
+
+        auto child = working_children[current_working_at];
+        auto& current = output.nodes[current_output_offset];
+        current = working_list[child];
+
+        // Starts and ends are guaranteed to be sorted for all children of a given node (after we cancel out the reversal).
+        // Obviously we already sorted in order of increasing starts, and interval indices were added to each node's children in that order.
+        // For the ends, this is less obvious but any end that is equal to or less than the previous end should be a child of that previous interval and should not show up here.
+        output.starts[current_output_offset] = working_start[child];
+        output.ends[current_output_offset] = working_end[child];
+
+        auto duplicates_old_start = current.duplicates_start, duplicates_old_end = current.duplicates_end;
+        if (duplicates_old_start != duplicates_old_end) {
+            current.duplicates_start = output.duplicates.size();
+            output.duplicates.insert(
+                output.duplicates.end(),
+                working_duplicates.rbegin() + (num_intervals - duplicates_old_end),
+                working_duplicates.rbegin() + (num_intervals - duplicates_old_start)
+            );
+            current.duplicates_end = output.duplicates.size();
+        }
+
+        auto children_old_start = current.children_start, children_old_end = current.children_end;
+        if (children_old_start != children_old_end) {
+            current.children_start = output_children_used;
+            output_children_used += children_old_end - children_old_start;
+            current.children_end = output_children_used;
+            history.emplace_back(children_old_end, children_old_start, current.children_start);
         }
     }
 //    t2 = std::chrono::high_resolution_clock::now();
