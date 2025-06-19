@@ -162,7 +162,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         if (curlevel.children_start_temp < curlevel.children_end_temp) {
             original_node.children_start = children_used;
             Index_ len = curlevel.children_end_temp - curlevel.children_start_temp;
-            if (curlevel.children_start_temp > children_used) { // protect the copy, though this should only be hit at the very end of the traversal.
+            if (curlevel.children_start_temp > children_used) { // protect the copy, though this condition should only be false at the very end of the traversal.
                 std::copy_n(working_children.begin() + curlevel.children_start_temp, len, working_children.begin() + children_used);
             }
             children_used += len;
@@ -172,7 +172,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         if (curlevel.duplicates_start_temp < curlevel.duplicates_end_temp) {
             original_node.duplicates_start = duplicates_used;
             Index_ len = curlevel.duplicates_end_temp - curlevel.duplicates_start_temp;
-            if (curlevel.duplicates_start_temp > duplicates_used) { // protect the copy, though this should only be hit at the very end of the traversal.
+            if (curlevel.duplicates_start_temp > duplicates_used) { // protect the copy, though this conditoin should only be false at the very end of the traversal.
                 std::copy_n(working_duplicates.begin() + curlevel.duplicates_start_temp, len, working_duplicates.begin() + duplicates_used);
             }
             duplicates_used += len;
@@ -253,6 +253,10 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         for (Index_ i = to; i > from; --i) {
             auto child = working_children[i - 1];
             output.nodes.push_back(working_list[child]);
+
+            // Starts and ends are guaranteed to be sorted for all children of a given node (after we cancel out the reversal).
+            // Obviously we already sorted in order of increasing starts, and interval indices were added to each node's children in that order.
+            // For the ends, this is less obvious but any end that is equal to or less than the previous end should be a child of that previous interval and should not show up here.
             output.starts.push_back(working_start[child]);
             output.ends.push_back(working_end[child]);
 
