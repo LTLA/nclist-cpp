@@ -97,7 +97,7 @@ This functionality is inspired by the `type=` argument in the `findOverlaps()` f
 Note that the interpretation of some parameters (e.g., `max_gap`) depends on the type of overlap,
 so be sure to consult the [relevant documentation](https://ltla.github.io/nclist-cpp).
 
-## Templating
+## Position types
 
 This library will work with double-precision coordinates for the range positions:
 
@@ -116,6 +116,31 @@ nclist::overlaps_any(subjects, 14.4, 29.5, params, workspace, matches);
 
 The subject range indices can also be changed from `int` to other integer types.
 Larger types may be preferred if there are more ranges than can be represented by `int`, at the cost of some increased memory usage.
+
+## Customizing subject ranges 
+
+We can use `build_custom()` to handle subject coordinates in formats other than a C-style array.
+For example, we might have stored the subject coordinates in a `std::deque` for more efficient expansion:
+
+```cpp
+std::deque<int> dq_starts { 5, 10, 20 };
+std::deque<int> dq_ends   { 8, 25, 30 };
+auto dq_subjects = nclist::build_custom(3, dq_starts, dq_ends);
+```
+
+A more interesting application involves adjusting the coordinates without allocating a new array.
+For example, many genomic intervals are stored with inclusive ends but `build()` expects exclusive ends.
+This is accommodated by creating a custom class that increments the end position on the fly:
+
+```cpp
+struct Incrementer {
+    Incrementer(const std::vector<int>& v) : original(v) {}
+    int operator[](int i) const { return original[i] + 1; }
+    const std::vector<int>& original;
+};
+
+auto inc_subjects = nclist::build_custom(3, starts, Incrementer(ends));
+```
 
 ## Building projects 
 

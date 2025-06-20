@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <numeric>
 #include <limits>
+#include <type_traits>
 
 /**
  * @file build.hpp
@@ -65,16 +66,16 @@ struct Nclist {
 };
 
 /**
+ * Convenient shorthand to get the type of element in an array or array-like object.
+ *
+ * @tparam Array_ Class with a `[` method that accepts an `Index_` and returns a value or reference.
+ */
+template<class Array_>
+using ArrayElement = typename std::remove_const<typename std::remove_reference<decltype(std::declval<Array_>()[0])>::type>::type;
+
+/**
  * @cond
  */
-template<typename Index_, typename Position_>
-struct Triplet {
-    Triplet() = default;
-    Triplet(Index_ id, Position_ start, Position_ end) : id(id), start(start), end(end) {}
-    Index_ id;
-    Position_ start, end;
-};
-
 template<class Container_, typename Size_>
 void safe_resize(Container_& container, Size_ size) {
     container.resize(size);
@@ -83,8 +84,11 @@ void safe_resize(Container_& container, Size_ size) {
     }
 }
 
-template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build_internal(std::vector<Index_> of_interest, const Position_* starts, const Position_* ends) {
+template<typename Index_, class StartArray_, class EndArray_>
+Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of_interest, const StartArray_& starts, const EndArray_& ends) {
+    typedef ArrayElement<StartArray_> Position;
+    static_assert(std::is_same<Position, ArrayElement<EndArray_> >::value);
+
     // We want to sort by increasing start but DECREASING end, so that the children sort after their parents. 
     auto cmp = [&](Index_ l, Index_ r) -> bool {
         if (starts[l] == starts[r]) {
@@ -98,7 +102,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Index_> of_interest, const 
     }
 
     auto num_intervals = of_interest.size();
-    typedef typename Nclist<Index_, Position_>::Node WorkingNode;
+    typedef typename Nclist<Index_, Position>::Node WorkingNode;
     std::vector<WorkingNode> working_list;
     working_list.reserve(num_intervals);
 
@@ -133,9 +137,9 @@ Nclist<Index_, Position_> build_internal(std::vector<Index_> of_interest, const 
 
     struct Level {
         Level() = default;
-        Level(Index_ offset, Position_ end) : offset(offset), end(end) {}
+        Level(Index_ offset, Position end) : offset(offset), end(end) {}
         Index_ offset; // offset into `working_list`
-        Position_ end; // storing the end coordinate for better cache locality.
+        Position end; // storing the end coordinate for better cache locality.
         Index_ num_children = 0;
         Index_ num_duplicates = 0;
     };
@@ -177,7 +181,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Index_> of_interest, const 
         }
     };
 
-    Position_ last_end = 0;
+    Position last_end = 0;
     Index_ last_id = 0;
     for (const auto& curid : of_interest) {
         auto curend = ends[curid];
@@ -228,7 +232,7 @@ Nclist<Index_, Position_> build_internal(std::vector<Index_> of_interest, const 
     // We convert the `working_list` into the output format where the children's start/end coordinates are laid out contiguously.
     // This should make for an easier binary search (allowing us to use std::lower_bound and friends) and improve cache locality.
     // We do this by traversing the list in a depth-first manner and adding all children of each node to the output vectors.
-    Nclist<Index_, Position_> output;
+    Nclist<Index_, Position> output;
     safe_resize(output.nodes, working_list.size());
     safe_resize(output.starts, working_list.size());
     safe_resize(output.ends, working_list.size());
@@ -303,37 +307,83 @@ Nclist<Index_, Position_> build_internal(std::vector<Index_> of_interest, const 
 
 /**
  * @tparam Index_ Integer type of the subject interval index.
- * @tparam Position_ Numeric type for the start/end positions of each interval.
+ * @tparam StartArray_ Class with a `[` method that accepts an `Index_` and returns the start position of the associated interval.
+ * @tparam EndArray_ Class with a `[` method that accepts an `Index_` and returns the end position of the associated interval.
+ * The type of position (after removing references) should be the same as that returned by `StartArray`'s `[` method`.
+ *
  * @param num_subset Number of subject intervals in the subset to include in the `Nclist`.
  * @param[in] subset Pointer to an array of length equal to `num_subset`, containing the subset of subject intervals to include in the NCList.
- * @param[in] starts Pointer to an array containing the start positions of all subject intervals.
- * This should be long enough to be addressable by any elements in `[subset, subset + num_subset)`.
- * @param[in] ends Pointer to an array containing the end positions of all subject intervals.
- * This should have the same length as the array pointed to by `starts`, where the `i`-th subject interval is defined as `[starts[i], ends[i])`.
+ * @param[in] starts Array-like object containing the start positions of all subject intervals.
+ * This should be addressable by any element in `[subset, subset + num_subset)`.
+ * @param[in] ends Array-like object containing the end positions of all subject intervals.
+ * This should be addressable by any element in `[subset, subset + num_subset)`, where the `i`-th subject interval is defined as `[starts[i], ends[i])`.
  * Note the non-inclusive nature of the end positions.
+ *
  * @return A `Nclist` containing the specified subset of subject intervals.
  */
-template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const Position_* starts, const Position_* ends) {
+template<typename Index_, class StartArray_, class EndArray_>
+Nclist<Index_, ArrayElement<StartArray_> > build_custom(Index_ num_subset, const Index_* subset, const StartArray_& starts, const EndArray_& ends) {
     std::vector<Index_> of_interest(subset, subset + num_subset);
     return build_internal(std::move(of_interest), starts, ends);
 }
 
 /**
  * @tparam Index_ Integer type of the subject interval index.
+ * @tparam StartArray_ Class with a `[` method that accepts an `Index_` and returns the start position of the associated interval.
+ * @tparam EndArray_ Class with a `[` method that accepts an `Index_` and returns the end position of the associated interval.
+ * The type of position (after removing references and `const`-ness) should be the same as that returned by `StartArray`'s `[` method`.
+ *
  * @tparam Position_ Numeric type for the start/end position of each interval.
+ * @param num_intervals Number of subject intervals to include in the NCList.
+ * @param[in] starts Array-like object containing the start positions of all subject intervals.
+ * This should be addressable by any element in `[0, num_intervals)`.
+ * @param[in] ends Array-like object containing the end positions of all subject intervals.
+ * This should be addressable by any element in `[0, num_intervals)`, where the `i`-th subject interval is defined as `[starts[i], ends[i])`.
+ * Note the non-inclusive nature of the end positions.
+ *
+ * @return A `Nclist` containing the specified subset of subject intervals.
+ */
+template<typename Index_, class StartArray_, class EndArray_>
+Nclist<Index_, ArrayElement<StartArray_> > build_custom(Index_ num_intervals, const StartArray_& starts, const EndArray_& ends) {
+    std::vector<Index_> of_interest(num_intervals);
+    std::iota(of_interest.begin(), of_interest.end(), static_cast<Index_>(0));
+    return build_internal(std::move(of_interest), starts, ends);
+}
+
+/**
+ * @tparam Index_ Integer type of the subject interval index.
+ * @tparam Position_ Numeric type for the start/end positions of each interval.
+ *
+ * @param num_subset Number of subject intervals in the subset to include in the `Nclist`.
+ * @param[in] subset Pointer to an array of length equal to `num_subset`, containing the subset of subject intervals to include in the NCList.
+ * @param[in] starts Pointer to an array containing the start positions of all subject intervals.
+ * This should be long enough to be addressable by any element in `[subset, subset + num_subset)`.
+ * @param[in] ends Pointer to an array containing the end positions of all subject intervals.
+ * This should be long enough to be addressable by any element in `[subset, subset + num_subset)`, where the `i`-th subject interval is defined as `[starts[i], ends[i])`.
+ * Note the non-inclusive nature of the end positions.
+ *
+ * @return A `Nclist` containing the specified subset of subject intervals.
+ */
+template<typename Index_, typename Position_>
+Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const Position_* starts, const Position_* ends) {
+    return build_custom<Index_>(num_subset, subset, starts, ends);
+}
+
+/**
+ * @tparam Index_ Integer type of the subject interval index.
+ * @tparam Position_ Numeric type for the start/end position of each interval.
+ *
  * @param num_intervals Number of subject intervals to include in the NCList.
  * @param[in] starts Pointer to an array of length `num_intervals`, containing the start positions of all subject intervals.
  * @param[in] ends Pointer to an array of length `num_intervals`, containing the end positions of all subject intervals.
  * The `i`-th subject interval is defined as `[starts[i], ends[i])`. 
  * Note the non-inclusive nature of the end positions.
+ *
  * @return A `Nclist` containing all subject intervals.
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build(Index_ num_intervals, const Position_* starts, const Position_* ends) {
-    std::vector<Index_> of_interest(num_intervals);
-    std::iota(of_interest.begin(), of_interest.end(), static_cast<Index_>(0));
-    return build_internal(std::move(of_interest), starts, ends);
+    return build_custom<Index_>(num_intervals, starts, ends);
 }
 
 }
