@@ -181,13 +181,23 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
         }
     };
 
-    Position last_end = 0;
     Index_ last_id = 0;
     for (const auto& curid : of_interest) {
         auto curend = ends[curid];
 
-        if (last_end == curend) { // Special handling of duplicate intervals.
-            if (levels.size() > 1) { // i.e., we're past the start.
+        if (levels.size() > 1) { // i.e., We've processed our first interval.
+            auto last_end = levels.back().end;
+            if (last_end < curend) { // If we're no longer nested within the previous interval, we need to back up to the root until we are nested.
+                num_children_to_copy = 0;
+                num_duplicates_to_copy = 0;
+                do {
+                    const auto& curlevel = levels.back();
+                    process_level(curlevel);
+                    levels.pop_back();
+                } while (levels.size() > 1 && levels.back().end < curend);
+                left_shift_indices();
+
+            } else if (last_end == curend) { // Special handling of duplicate intervals.
                 if (starts[curid] == starts[last_id]) { // Only accessing 'starts' if we're forced to.
                     ++(levels.back().num_duplicates);
                     --duplicates_tmp_boundary;
@@ -197,15 +207,6 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
             }
         }
 
-        num_children_to_copy = 0;
-        num_duplicates_to_copy = 0;
-        while (levels.size() > 1 && levels.back().end < curend) {
-            const auto& curlevel = levels.back();
-            process_level(curlevel);
-            levels.pop_back();
-        }
-        left_shift_indices();
-
         auto used = working_list.size();
         working_list.emplace_back(curid);
         ++(levels.back().num_children);
@@ -214,7 +215,6 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
         levels.emplace_back(used, curend);
 
         last_id = curid;
-        last_end = curend;
     }
 
     num_children_to_copy = 0;
