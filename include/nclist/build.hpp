@@ -7,8 +7,6 @@
 #include <algorithm>
 #include <numeric>
 #include <limits>
-#include <chrono>
-#include <iostream>
 
 /**
  * @file build.hpp
@@ -86,30 +84,23 @@ void safe_resize(Container_& container, Size_ size) {
 }
 
 template<typename Index_, typename Position_>
-Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> > intervals) {
+Nclist<Index_, Position_> build_internal(std::vector<Index_> of_interest, const Position_* starts, const Position_* ends) {
     // We want to sort by increasing start but DECREASING end, so that the children sort after their parents. 
-    auto cmp = [&](const Triplet<Index_, Position_>& l, const Triplet<Index_, Position_>& r) -> bool {
-        if (l.start == r.start) {
-            return l.end > r.end;
+    auto cmp = [&](Index_ l, Index_ r) -> bool {
+        if (starts[l] == starts[r]) {
+            return ends[l] > ends[r];
         } else {
-            return l.start < r.start;
+            return starts[l] < starts[r];
         }
     };
-    auto t1 = std::chrono::high_resolution_clock::now();
-    if (!std::is_sorted(intervals.begin(), intervals.end(), cmp)) {
-        std::sort(intervals.begin(), intervals.end(), cmp);
+    if (!std::is_sorted(of_interest.begin(), of_interest.end(), cmp)) {
+        std::sort(of_interest.begin(), of_interest.end(), cmp);
     }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    std::cout << "sorting takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
 
-    t1 = std::chrono::high_resolution_clock::now();
-    auto num_intervals = intervals.size();
+    auto num_intervals = of_interest.size();
     typedef typename Nclist<Index_, Position_>::Node WorkingNode;
     std::vector<WorkingNode> working_list;
     working_list.reserve(num_intervals);
-    std::vector<Position_> working_start, working_end;
-    working_start.reserve(num_intervals);
-    working_end.reserve(num_intervals);
 
     // This section deserves some explanation.
     // For each node in the list, we need to track its children.
@@ -186,19 +177,19 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         }
     };
 
-    Position_ last_start = 0, last_end = 0;
-    for (const auto& interval : intervals) {
-        auto curid = interval.id;
-        auto curstart = interval.start;
-        auto curend = interval.end;
+    Position_ last_end = 0;
+    Index_ last_id = 0;
+    for (const auto& curid : of_interest) {
+        auto curend = ends[curid];
 
-        // Special handling of duplicate intervals.
-        if (last_start == curstart && last_end == curend) {
+        if (last_end == curend) { // Special handling of duplicate intervals.
             if (levels.size() > 1) { // i.e., we're past the start.
-                ++(levels.back().num_duplicates);
-                --duplicates_tmp_boundary;
-                working_duplicates[duplicates_tmp_boundary] = curid;
-                continue;
+                if (starts[curid] == starts[last_id]) { // Only accessing 'starts' if we're forced to.
+                    ++(levels.back().num_duplicates);
+                    --duplicates_tmp_boundary;
+                    working_duplicates[duplicates_tmp_boundary] = curid;
+                    continue;
+                }
             }
         }
 
@@ -213,15 +204,12 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
 
         auto used = working_list.size();
         working_list.emplace_back(curid);
-        working_start.push_back(curstart);
-        working_end.push_back(curend);
-
         ++(levels.back().num_children);
         --children_tmp_boundary;
         working_children[children_tmp_boundary] = used;
         levels.emplace_back(used, curend);
 
-        last_start = curstart;
+        last_id = curid;
         last_end = curend;
     }
 
@@ -234,13 +222,8 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
     }
     left_shift_indices();
 
-    intervals.clear(); // freeing up some memory for more allocations in the next section.
-    intervals.shrink_to_fit();
-
-    t2 = std::chrono::high_resolution_clock::now();
-    std::cout << "first pass takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
-
-    t1 = std::chrono::high_resolution_clock::now();
+    of_interest.clear(); // freeing up some memory for more allocations in the next section.
+    of_interest.shrink_to_fit();
 
     // We convert the `working_list` into the output format where the children's start/end coordinates are laid out contiguously.
     // This should make for an easier binary search (allowing us to use std::lower_bound and friends) and improve cache locality.
@@ -289,8 +272,8 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         // Starts and ends are guaranteed to be sorted for all children of a given node (after we cancel out the reversal).
         // Obviously we already sorted in order of increasing starts, and interval indices were added to each node's children in that order.
         // For the ends, this is less obvious but any end that is equal to or less than the previous end should be a child of that previous interval and should not show up here.
-        output.starts[current_output_offset] = working_start[child];
-        output.ends[current_output_offset] = working_end[child];
+        output.starts[current_output_offset] = starts[current.id];
+        output.ends[current_output_offset] = ends[current.id];
 
         auto duplicates_old_start = current.duplicates_start, duplicates_old_end = current.duplicates_end;
         if (duplicates_old_start != duplicates_old_end) {
@@ -311,8 +294,6 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
             history.emplace_back(children_old_end, children_old_start, current.children_start);
         }
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    std::cout << "second pass takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
 
     return output;
 }
@@ -334,12 +315,8 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const Position_* starts, const Position_* ends) {
-    std::vector<Triplet<Index_, Position_> > intervals;
-    intervals.reserve(num_subset);
-    for (Index_ s = 0; s < num_subset; ++s) {
-        intervals.emplace_back(subset[s], starts[s], ends[s]);
-    }
-    return build_internal(std::move(intervals));
+    std::vector<Index_> of_interest(subset, subset + num_subset);
+    return build_internal(std::move(of_interest), starts, ends);
 }
 
 /**
@@ -354,15 +331,9 @@ Nclist<Index_, Position_> build(Index_ num_subset, const Index_* subset, const P
  */
 template<typename Index_, typename Position_>
 Nclist<Index_, Position_> build(Index_ num_intervals, const Position_* starts, const Position_* ends) {
-//    auto t1 = std::chrono::high_resolution_clock::now();
-    std::vector<Triplet<Index_, Position_> > intervals;
-    intervals.reserve(num_intervals);
-    for (Index_ i = 0; i < num_intervals; ++i) {
-        intervals.emplace_back(i, starts[i], ends[i]);
-    }
-//    auto t2 = std::chrono::high_resolution_clock::now();
-//    std::cout << "creating the thing takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
-    return build_internal(std::move(intervals));
+    std::vector<Index_> of_interest(num_intervals);
+    std::iota(of_interest.begin(), of_interest.end(), static_cast<Index_>(0));
+    return build_internal(std::move(of_interest), starts, ends);
 }
 
 }
