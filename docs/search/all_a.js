@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['setting_20parameters_0',['Setting parameters',['../index.html#autotoc_md3',1,'']]],
-  ['start_1',['Quick start',['../index.html#autotoc_md2',1,'']]]
+  ['quick_20start_0',['Quick start',['../index.html#autotoc_md2',1,'']]],
+  ['quit_5fon_5ffirst_1',['quit_on_first',['../structnclist_1_1OverlapsAnyParameters.html#a8f06f6eff0a683f5cb0e32060bd5f5f3',1,'nclist::OverlapsAnyParameters::quit_on_first'],['../structnclist_1_1OverlapsEndParameters.html#a08a8d4f230b4786dd7886be20b634e5c',1,'nclist::OverlapsEndParameters::quit_on_first'],['../structnclist_1_1OverlapsEqualParameters.html#ac5ca81d6a81bfe6df3d3853805d52ff8',1,'nclist::OverlapsEqualParameters::quit_on_first'],['../structnclist_1_1OverlapsExtendParameters.html#a6bce1fdfe4fefab5c48a194d55d02994',1,'nclist::OverlapsExtendParameters::quit_on_first'],['../structnclist_1_1OverlapsStartParameters.html#a26b33e5a64909962350b7369cd431dcf',1,'nclist::OverlapsStartParameters::quit_on_first'],['../structnclist_1_1OverlapsWithinParameters.html#a2b0d57f83eea2872bf1fc766b4c86bbe',1,'nclist::OverlapsWithinParameters::quit_on_first']]]
 ];

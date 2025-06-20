@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['nclist_0',['Nclist',['../structnclist_1_1Nclist.html',1,'nclist']]],
-  ['nclist_1',['nclist',['../namespacenclist.html',1,'']]],
-  ['nclist_2ehpp_2',['nclist.hpp',['../nclist_8hpp.html',1,'']]],
-  ['nested_20containment_20lists_20in_20c_3',['Nested containment lists in C++',['../index.html',1,'']]]
+  ['manual_0',['Manual',['../index.html#autotoc_md10',1,'']]],
+  ['max_5fgap_1',['max_gap',['../structnclist_1_1OverlapsAnyParameters.html#a3cbcc727a8b0a7901edf133658e083a0',1,'nclist::OverlapsAnyParameters::max_gap'],['../structnclist_1_1OverlapsEndParameters.html#a9044d1c7f2b874afa173d509bb7ff4a9',1,'nclist::OverlapsEndParameters::max_gap'],['../structnclist_1_1OverlapsEqualParameters.html#a0b5cababa232c36917e4df6638a00547',1,'nclist::OverlapsEqualParameters::max_gap'],['../structnclist_1_1OverlapsExtendParameters.html#a81bca092d4fc66aaaeada7b13cec78f6',1,'nclist::OverlapsExtendParameters::max_gap'],['../structnclist_1_1OverlapsStartParameters.html#aaf56a28fba57e919f94088408bc03eb4',1,'nclist::OverlapsStartParameters::max_gap'],['../structnclist_1_1OverlapsWithinParameters.html#ac1ea64811fa56a9692d7fa76c86e6f7c',1,'nclist::OverlapsWithinParameters::max_gap']]],
+  ['min_5foverlap_2',['min_overlap',['../structnclist_1_1OverlapsAnyParameters.html#abebf28537e480888e34414056b434958',1,'nclist::OverlapsAnyParameters::min_overlap'],['../structnclist_1_1OverlapsEndParameters.html#a16c0568bc0bc34cceb0c1a8ddcc68be3',1,'nclist::OverlapsEndParameters::min_overlap'],['../structnclist_1_1OverlapsEqualParameters.html#a5ec1ee3a73d0590e39b593425f4a382a',1,'nclist::OverlapsEqualParameters::min_overlap'],['../structnclist_1_1OverlapsExtendParameters.html#afbb82777e1b948e6b037713c88de94c8',1,'nclist::OverlapsExtendParameters::min_overlap'],['../structnclist_1_1OverlapsStartParameters.html#a0522dd6f35f283fc8638a9d20a88da8e',1,'nclist::OverlapsStartParameters::min_overlap'],['../structnclist_1_1OverlapsWithinParameters.html#ad52f540fa13a914bd4a53e6029a74ad6',1,'nclist::OverlapsWithinParameters::min_overlap']]]
 ];

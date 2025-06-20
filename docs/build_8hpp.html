@@ -93,6 +93,7 @@ $(function(){ initResizable(false); });
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">build.hpp File Reference</div></div>
 </div><!--header-->
@@ -106,6 +107,7 @@ $(function(){ initResizable(false); });
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;numeric&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
+<code>#include &lt;type_traits&gt;</code><br />
 </div>
 <p><a href="build_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -121,8 +123,20 @@ Namespaces</h2></td></tr>
 <tr class="memdesc:namespacenclist"><td class="mdescLeft">&#160;</td><td class="mdescRight">Header-only library for nested containment lists. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:af9f92755adcdb63f464f9cd32e65f20d" id="r_af9f92755adcdb63f464f9cd32e65f20d"><td class="memTemplParams" colspan="2">template&lt;class Array_ &gt; </td></tr>
+<tr class="memitem:af9f92755adcdb63f464f9cd32e65f20d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacenclist.html#af9f92755adcdb63f464f9cd32e65f20d">nclist::ArrayElement</a> = typename std::remove_const&lt;typename std::remove_reference&lt;decltype(std::declval&lt;Array_&gt;()[0])&gt;::type&gt;::type</td></tr>
+<tr class="separator:af9f92755adcdb63f464f9cd32e65f20d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a6c7b69a3446e7d037a2d406f67909167" id="r_a6c7b69a3446e7d037a2d406f67909167"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , class StartArray_ , class EndArray_ &gt; </td></tr>
+<tr class="memitem:a6c7b69a3446e7d037a2d406f67909167"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, <a class="el" href="namespacenclist.html#af9f92755adcdb63f464f9cd32e65f20d">ArrayElement</a>&lt; StartArray_ &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacenclist.html#a6c7b69a3446e7d037a2d406f67909167">nclist::build_custom</a> (Index_ num_subset, const Index_ *subset, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</td></tr>
+<tr class="separator:a6c7b69a3446e7d037a2d406f67909167"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a990b3b5fca8aa9c586e02ae107266f14" id="r_a990b3b5fca8aa9c586e02ae107266f14"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , class StartArray_ , class EndArray_ &gt; </td></tr>
+<tr class="memitem:a990b3b5fca8aa9c586e02ae107266f14"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, <a class="el" href="namespacenclist.html#af9f92755adcdb63f464f9cd32e65f20d">ArrayElement</a>&lt; StartArray_ &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacenclist.html#a990b3b5fca8aa9c586e02ae107266f14">nclist::build_custom</a> (Index_ num_intervals, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</td></tr>
+<tr class="separator:a990b3b5fca8aa9c586e02ae107266f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af017ae50c229346e3cf8e41599fbb5c0" id="r_af017ae50c229346e3cf8e41599fbb5c0"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
 <tr class="memitem:af017ae50c229346e3cf8e41599fbb5c0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacenclist.html#af017ae50c229346e3cf8e41599fbb5c0">nclist::build</a> (Index_ num_subset, const Index_ *subset, const Position_ *starts, const Position_ *ends)</td></tr>
 <tr class="separator:af017ae50c229346e3cf8e41599fbb5c0"><td class="memSeparator" colspan="2">&#160;</td></tr>

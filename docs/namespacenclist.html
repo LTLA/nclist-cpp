@@ -88,6 +88,7 @@ $(function(){ initResizable(false); });
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">nclist Namespace Reference</div></div>
 </div><!--header-->
@@ -138,8 +139,20 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Workspace for <code><a class="el" href="#a17c768a993d651cfa8bd50080cfdd913">overlaps_within()</a></code>.  <a href="structnclist_1_1OverlapsWithinWorkspace.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:af9f92755adcdb63f464f9cd32e65f20d" id="r_af9f92755adcdb63f464f9cd32e65f20d"><td class="memTemplParams" colspan="2">template&lt;class Array_ &gt; </td></tr>
+<tr class="memitem:af9f92755adcdb63f464f9cd32e65f20d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af9f92755adcdb63f464f9cd32e65f20d">ArrayElement</a> = typename std::remove_const&lt;typename std::remove_reference&lt;decltype(std::declval&lt;Array_&gt;()[0])&gt;::type&gt;::type</td></tr>
+<tr class="separator:af9f92755adcdb63f464f9cd32e65f20d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a6c7b69a3446e7d037a2d406f67909167" id="r_a6c7b69a3446e7d037a2d406f67909167"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , class StartArray_ , class EndArray_ &gt; </td></tr>
+<tr class="memitem:a6c7b69a3446e7d037a2d406f67909167"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, <a class="el" href="#af9f92755adcdb63f464f9cd32e65f20d">ArrayElement</a>&lt; StartArray_ &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a6c7b69a3446e7d037a2d406f67909167">build_custom</a> (Index_ num_subset, const Index_ *subset, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</td></tr>
+<tr class="separator:a6c7b69a3446e7d037a2d406f67909167"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a990b3b5fca8aa9c586e02ae107266f14" id="r_a990b3b5fca8aa9c586e02ae107266f14"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , class StartArray_ , class EndArray_ &gt; </td></tr>
+<tr class="memitem:a990b3b5fca8aa9c586e02ae107266f14"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, <a class="el" href="#af9f92755adcdb63f464f9cd32e65f20d">ArrayElement</a>&lt; StartArray_ &gt; &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a990b3b5fca8aa9c586e02ae107266f14">build_custom</a> (Index_ num_intervals, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</td></tr>
+<tr class="separator:a990b3b5fca8aa9c586e02ae107266f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af017ae50c229346e3cf8e41599fbb5c0" id="r_af017ae50c229346e3cf8e41599fbb5c0"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
 <tr class="memitem:af017ae50c229346e3cf8e41599fbb5c0"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build</a> (Index_ num_subset, const Index_ *subset, const Position_ *starts, const Position_ *ends)</td></tr>
 <tr class="separator:af017ae50c229346e3cf8e41599fbb5c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -167,7 +180,31 @@ Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Header-only library for nested containment lists. </p>
-</div><h2 class="groupheader">Function Documentation</h2>
+</div><h2 class="groupheader">Typedef Documentation</h2>
+<a id="af9f92755adcdb63f464f9cd32e65f20d" name="af9f92755adcdb63f464f9cd32e65f20d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9f92755adcdb63f464f9cd32e65f20d">&#9670;&#160;</a></span>ArrayElement</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Array_ &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#af9f92755adcdb63f464f9cd32e65f20d">nclist::ArrayElement</a> = typename std::remove_const&lt;typename std::remove_reference&lt;decltype(std::declval&lt;Array_&gt;()[0])&gt;::type&gt;::type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Convenient shorthand to get the type of element in an array or array-like object.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Array_</td><td>Class with a <code>[</code> method that accepts an <code>Index_</code> and returns a value or reference. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
 <a id="aa77737736d32ca4e0fec076d92c64665" name="aa77737736d32ca4e0fec076d92c64665"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa77737736d32ca4e0fec076d92c64665">&#9670;&#160;</a></span>build() <span class="overload">[1/2]</span></h2>
 
@@ -196,7 +233,7 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end position of each interval. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end position of each interval.</td></tr>
   </table>
   </dd>
 </dl>
@@ -204,7 +241,7 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">num_intervals</td><td>Number of subject intervals to include in the NCList. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Pointer to an array of length <code>num_intervals</code>, containing the start positions of all subject intervals. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array of length <code>num_intervals</code>, containing the end positions of all subject intervals. The <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array of length <code>num_intervals</code>, containing the end positions of all subject intervals. The <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions.</td></tr>
   </table>
   </dd>
 </dl>
@@ -245,7 +282,7 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
-    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval.</td></tr>
   </table>
   </dd>
 </dl>
@@ -253,8 +290,105 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
   <table class="params">
     <tr><td class="paramdir"></td><td class="paramname">num_subset</td><td>Number of subject intervals in the subset to include in the <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code>. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">subset</td><td>Pointer to an array of length equal to <code>num_subset</code>, containing the subset of subject intervals to include in the NCList. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Pointer to an array containing the start positions of all subject intervals. This should be long enough to be addressable by any elements in <code>[subset, subset + num_subset)</code>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array containing the end positions of all subject intervals. This should have the same length as the array pointed to by <code>starts</code>, where the <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Pointer to an array containing the start positions of all subject intervals. This should be long enough to be addressable by any element in <code>[subset, subset + num_subset)</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Pointer to an array containing the end positions of all subject intervals. This should be long enough to be addressable by any element in <code>[subset, subset + num_subset)</code>, where the <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> containing the specified subset of subject intervals. </dd></dl>
+
+</div>
+</div>
+<a id="a990b3b5fca8aa9c586e02ae107266f14" name="a990b3b5fca8aa9c586e02ae107266f14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a990b3b5fca8aa9c586e02ae107266f14">&#9670;&#160;</a></span>build_custom() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Index_ , class StartArray_ , class EndArray_ &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, <a class="el" href="#af9f92755adcdb63f464f9cd32e65f20d">ArrayElement</a>&lt; StartArray_ &gt; &gt; nclist::build_custom </td>
+          <td>(</td>
+          <td class="paramtype">Index_</td>          <td class="paramname"><span class="paramname"><em>num_intervals</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const StartArray_ &amp;</td>          <td class="paramname"><span class="paramname"><em>starts</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const EndArray_ &amp;</td>          <td class="paramname"><span class="paramname"><em>ends</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">StartArray_</td><td>Class with a <code>[</code> method that accepts an <code>Index_</code> and returns the start position of the associated interval. </td></tr>
+    <tr><td class="paramname">EndArray_</td><td>Class with a <code>[</code> method that accepts an <code>Index_</code> and returns the end position of the associated interval. The type of position (after removing references and <code>const</code>-ness) should be the same as that returned by <code>StartArray</code>'s <code>[</code> method`.</td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end position of each interval. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">num_intervals</td><td>Number of subject intervals to include in the NCList. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Array-like object containing the start positions of all subject intervals. This should be addressable by any element in <code>[0, num_intervals)</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Array-like object containing the end positions of all subject intervals. This should be addressable by any element in <code>[0, num_intervals)</code>, where the <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> containing the specified subset of subject intervals. </dd></dl>
+
+</div>
+</div>
+<a id="a6c7b69a3446e7d037a2d406f67909167" name="a6c7b69a3446e7d037a2d406f67909167"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c7b69a3446e7d037a2d406f67909167">&#9670;&#160;</a></span>build_custom() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Index_ , class StartArray_ , class EndArray_ &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, <a class="el" href="#af9f92755adcdb63f464f9cd32e65f20d">ArrayElement</a>&lt; StartArray_ &gt; &gt; nclist::build_custom </td>
+          <td>(</td>
+          <td class="paramtype">Index_</td>          <td class="paramname"><span class="paramname"><em>num_subset</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Index_ *</td>          <td class="paramname"><span class="paramname"><em>subset</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const StartArray_ &amp;</td>          <td class="paramname"><span class="paramname"><em>starts</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const EndArray_ &amp;</td>          <td class="paramname"><span class="paramname"><em>ends</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">StartArray_</td><td>Class with a <code>[</code> method that accepts an <code>Index_</code> and returns the start position of the associated interval. </td></tr>
+    <tr><td class="paramname">EndArray_</td><td>Class with a <code>[</code> method that accepts an <code>Index_</code> and returns the end position of the associated interval. The type of position (after removing references) should be the same as that returned by <code>StartArray</code>'s <code>[</code> method`.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">num_subset</td><td>Number of subject intervals in the subset to include in the <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">subset</td><td>Pointer to an array of length equal to <code>num_subset</code>, containing the subset of subject intervals to include in the NCList. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">starts</td><td>Array-like object containing the start positions of all subject intervals. This should be addressable by any element in <code>[subset, subset + num_subset)</code>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ends</td><td>Array-like object containing the end positions of all subject intervals. This should be addressable by any element in <code>[subset, subset + num_subset)</code>, where the <code>i</code>-th subject interval is defined as <code>[starts[i], ends[i])</code>. Note the non-inclusive nature of the end positions.</td></tr>
   </table>
   </dd>
 </dl>

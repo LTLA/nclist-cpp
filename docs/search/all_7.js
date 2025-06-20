@@ -1,29 +1,7 @@
 var searchData=
 [
-  ['overlap_20types_0',['Overlap types',['../index.html#autotoc_md4',1,'']]],
-  ['overlaps_5fany_1',['overlaps_any',['../namespacenclist.html#ade7d2e27bd85d84a0cd210d3fcce7335',1,'nclist']]],
-  ['overlaps_5fany_2ehpp_2',['overlaps_any.hpp',['../overlaps__any_8hpp.html',1,'']]],
-  ['overlaps_5fend_3',['overlaps_end',['../namespacenclist.html#a26c1a70487c3d4a5243622b1bf757523',1,'nclist']]],
-  ['overlaps_5fend_2ehpp_4',['overlaps_end.hpp',['../overlaps__end_8hpp.html',1,'']]],
-  ['overlaps_5fequal_5',['overlaps_equal',['../namespacenclist.html#a749d236b974c3bacc843cc96548d7e20',1,'nclist']]],
-  ['overlaps_5fequal_2ehpp_6',['overlaps_equal.hpp',['../overlaps__equal_8hpp.html',1,'']]],
-  ['overlaps_5fextend_7',['overlaps_extend',['../namespacenclist.html#a6c93cd0ba40906272d62411f3a7b83c3',1,'nclist']]],
-  ['overlaps_5fextend_2ehpp_8',['overlaps_extend.hpp',['../overlaps__extend_8hpp.html',1,'']]],
-  ['overlaps_5fstart_9',['overlaps_start',['../namespacenclist.html#aebdbb3bf7c28aad8d1237d030a6c97f6',1,'nclist']]],
-  ['overlaps_5fstart_2ehpp_10',['overlaps_start.hpp',['../overlaps__start_8hpp.html',1,'']]],
-  ['overlaps_5fwithin_11',['overlaps_within',['../namespacenclist.html#a17c768a993d651cfa8bd50080cfdd913',1,'nclist']]],
-  ['overlaps_5fwithin_2ehpp_12',['overlaps_within.hpp',['../overlaps__within_8hpp.html',1,'']]],
-  ['overlapsanyparameters_13',['OverlapsAnyParameters',['../structnclist_1_1OverlapsAnyParameters.html',1,'nclist']]],
-  ['overlapsanyworkspace_14',['OverlapsAnyWorkspace',['../structnclist_1_1OverlapsAnyWorkspace.html',1,'nclist']]],
-  ['overlapsendparameters_15',['OverlapsEndParameters',['../structnclist_1_1OverlapsEndParameters.html',1,'nclist']]],
-  ['overlapsendworkspace_16',['OverlapsEndWorkspace',['../structnclist_1_1OverlapsEndWorkspace.html',1,'nclist']]],
-  ['overlapsequalparameters_17',['OverlapsEqualParameters',['../structnclist_1_1OverlapsEqualParameters.html',1,'nclist']]],
-  ['overlapsequalworkspace_18',['OverlapsEqualWorkspace',['../structnclist_1_1OverlapsEqualWorkspace.html',1,'nclist']]],
-  ['overlapsextendparameters_19',['OverlapsExtendParameters',['../structnclist_1_1OverlapsExtendParameters.html',1,'nclist']]],
-  ['overlapsextendworkspace_20',['OverlapsExtendWorkspace',['../structnclist_1_1OverlapsExtendWorkspace.html',1,'nclist']]],
-  ['overlapsstartparameters_21',['OverlapsStartParameters',['../structnclist_1_1OverlapsStartParameters.html',1,'nclist']]],
-  ['overlapsstartworkspace_22',['OverlapsStartWorkspace',['../structnclist_1_1OverlapsStartWorkspace.html',1,'nclist']]],
-  ['overlapswithinparameters_23',['OverlapsWithinParameters',['../structnclist_1_1OverlapsWithinParameters.html',1,'nclist']]],
-  ['overlapswithinworkspace_24',['OverlapsWithinWorkspace',['../structnclist_1_1OverlapsWithinWorkspace.html',1,'nclist']]],
-  ['overview_25',['Overview',['../index.html#autotoc_md1',1,'']]]
+  ['nclist_0',['Nclist',['../structnclist_1_1Nclist.html',1,'nclist']]],
+  ['nclist_1',['nclist',['../namespacenclist.html',1,'']]],
+  ['nclist_2ehpp_2',['nclist.hpp',['../nclist_8hpp.html',1,'']]],
+  ['nested_20containment_20lists_20in_20c_3',['Nested containment lists in C++',['../index.html',1,'']]]
 ];

@@ -282,6 +282,27 @@
     <class kind="struct">nclist::OverlapsStartWorkspace</class>
     <class kind="struct">nclist::OverlapsWithinParameters</class>
     <class kind="struct">nclist::OverlapsWithinWorkspace</class>
+    <member kind="typedef">
+      <type>typename std::remove_const&lt; typename std::remove_reference&lt; decltype(std::declval&lt; Array_ &gt;()[0])&gt;::type &gt;::type</type>
+      <name>ArrayElement</name>
+      <anchorfile>namespacenclist.html</anchorfile>
+      <anchor>af9f92755adcdb63f464f9cd32e65f20d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="function">
+      <type>Nclist&lt; Index_, ArrayElement&lt; StartArray_ &gt; &gt;</type>
+      <name>build_custom</name>
+      <anchorfile>namespacenclist.html</anchorfile>
+      <anchor>a6c7b69a3446e7d037a2d406f67909167</anchor>
+      <arglist>(Index_ num_subset, const Index_ *subset, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</arglist>
+    </member>
+    <member kind="function">
+      <type>Nclist&lt; Index_, ArrayElement&lt; StartArray_ &gt; &gt;</type>
+      <name>build_custom</name>
+      <anchorfile>namespacenclist.html</anchorfile>
+      <anchor>a990b3b5fca8aa9c586e02ae107266f14</anchor>
+      <arglist>(Index_ num_intervals, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</arglist>
+    </member>
     <member kind="function">
       <type>Nclist&lt; Index_, Position_ &gt;</type>
       <name>build</name>

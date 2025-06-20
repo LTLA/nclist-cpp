@@ -1,12 +1,13 @@
 var indexSectionsWithContent =
 {
-  0: "bcfilmnopqstw",
+  0: "abcfilmnopqrstw",
   1: "no",
   2: "n",
   3: "bno",
   4: "bo",
   5: "mq",
-  6: "ciln"
+  6: "a",
+  7: "ciln"
 };
 
 var indexSectionNames =
@@ -17,7 +18,8 @@ var indexSectionNames =
   3: "files",
   4: "functions",
   5: "variables",
-  6: "pages"
+  6: "typedefs",
+  7: "pages"
 };
 
 var indexSectionLabels =
@@ -28,6 +30,7 @@ var indexSectionLabels =
   3: "Files",
   4: "Functions",
   5: "Variables",
-  6: "Pages"
+  6: "Typedefs",
+  7: "Pages"
 };
 
