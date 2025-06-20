@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <numeric>
 #include <limits>
-//#include <chrono>
-//#include <iostream>
+#include <chrono>
+#include <iostream>
 
 /**
  * @file build.hpp
@@ -95,14 +95,14 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
             return l.start < r.start;
         }
     };
-//    auto t1 = std::chrono::high_resolution_clock::now();
+    auto t1 = std::chrono::high_resolution_clock::now();
     if (!std::is_sorted(intervals.begin(), intervals.end(), cmp)) {
         std::sort(intervals.begin(), intervals.end(), cmp);
     }
-//    auto t2 = std::chrono::high_resolution_clock::now();
-//    std::cout << "sorting takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::cout << "sorting takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
 
-//    t1 = std::chrono::high_resolution_clock::now();
+    t1 = std::chrono::high_resolution_clock::now();
     auto num_intervals = intervals.size();
     typedef typename Nclist<Index_, Position_>::Node WorkingNode;
     std::vector<WorkingNode> working_list;
@@ -125,58 +125,64 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
     // We will always have space to perform the left shift as we know the upper bound on the number of child indices.
     // This move also exposes the indices of that level's parent on the right of the vector, allowing for further addition of new children to that parent.
     //
+    // The simplest approach is to left shift the children of each level separately.
+    // However, if we are discarding multiple levels at once, we can accumulate their associated contiguous slices of the 'working_children' vector.
+    // This allows us to perform a single left shift, eliminating overhead from repeated function calls.
+    //
     // A quirk of this approach is that, because we add on the right towards the center, the children are stored in reverse order of addition.
     // This requires some later work to undo this, to report the correct order for binary search.
     //
     // We use the same approach for duplicates.
     std::vector<Index_> working_children;
     safe_resize(working_children, num_intervals);
-    Index_ children_used = 0;
+    Index_ children_used = 0, children_tmp_boundary = num_intervals;
     std::vector<Index_> working_duplicates;
     safe_resize(working_duplicates, num_intervals);
-    Index_ duplicates_used = 0;
+    Index_ duplicates_used = 0, duplicates_tmp_boundary = num_intervals;
 
     struct Level {
         Level() = default;
         Level(Index_ offset, Position_ end) : offset(offset), end(end) {}
         Index_ offset; // offset into `working_list`
         Position_ end; // storing the end coordinate for better cache locality.
-        Index_ children_start_temp;
-        Index_ children_end_temp;
-        Index_ duplicates_start_temp;
-        Index_ duplicates_end_temp;
+        Index_ num_children = 0;
+        Index_ num_duplicates = 0;
     };
-
     std::vector<Level> levels(1);
-    {
-        auto& first = levels.front();
-        first.children_start_temp = num_intervals;
-        first.children_end_temp = num_intervals;
-        first.duplicates_start_temp = num_intervals;
-        first.duplicates_end_temp = num_intervals;
-    }
 
+    Index_ num_children_to_copy = 0;
+    Index_ num_duplicates_to_copy = 0;
     auto process_level = [&](const Level& curlevel) -> void {
         auto& original_node = working_list[curlevel.offset];
 
-        if (curlevel.children_start_temp < curlevel.children_end_temp) {
-            original_node.children_start = children_used;
-            Index_ len = curlevel.children_end_temp - curlevel.children_start_temp;
-            if (curlevel.children_start_temp > children_used) { // protect the copy, though this condition should only be false at the very end of the traversal.
-                std::copy_n(working_children.begin() + curlevel.children_start_temp, len, working_children.begin() + children_used);
-            }
-            children_used += len;
-            original_node.children_end = children_used;
+        if (curlevel.num_children) {
+            original_node.children_start = children_used + num_children_to_copy;
+            num_children_to_copy += curlevel.num_children;
+            original_node.children_end = children_used + num_children_to_copy;
         }
 
-        if (curlevel.duplicates_start_temp < curlevel.duplicates_end_temp) {
-            original_node.duplicates_start = duplicates_used;
-            Index_ len = curlevel.duplicates_end_temp - curlevel.duplicates_start_temp;
-            if (curlevel.duplicates_start_temp > duplicates_used) { // protect the copy, though this conditoin should only be false at the very end of the traversal.
-                std::copy_n(working_duplicates.begin() + curlevel.duplicates_start_temp, len, working_duplicates.begin() + duplicates_used);
+        if (curlevel.num_duplicates) {
+            original_node.duplicates_start = duplicates_used + num_duplicates_to_copy;
+            num_duplicates_to_copy += curlevel.num_duplicates;
+            original_node.duplicates_end = duplicates_used + num_duplicates_to_copy;
+        }
+    };
+
+    auto left_shift_indices = [&]() -> void {
+        if (num_children_to_copy) {
+            if (children_used != children_tmp_boundary) { // protect the copy, though this should only be relevant at the end of the traversal.
+                std::copy_n(working_children.begin() + children_tmp_boundary, num_children_to_copy, working_children.begin() + children_used);
             }
-            duplicates_used += len;
-            original_node.duplicates_end = duplicates_used;
+            children_used += num_children_to_copy;
+            children_tmp_boundary += num_children_to_copy;
+        }
+
+        if (num_duplicates_to_copy) {
+            if (duplicates_used != duplicates_tmp_boundary) { // protect the copy, though this should only be relevant at the end of the traversal.
+                std::copy_n(working_duplicates.begin() + duplicates_tmp_boundary, num_duplicates_to_copy, working_duplicates.begin() + duplicates_used);
+            }
+            duplicates_used += num_duplicates_to_copy;
+            duplicates_tmp_boundary += num_duplicates_to_copy;
         }
     };
 
@@ -189,54 +195,52 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
         // Special handling of duplicate intervals.
         if (last_start == curstart && last_end == curend) {
             if (levels.size() > 1) { // i.e., we're past the start.
-                auto& parent_duplicates_pos = levels.back().duplicates_start_temp;
-                --parent_duplicates_pos;
-                working_duplicates[parent_duplicates_pos] = curid;
+                ++(levels.back().num_duplicates);
+                --duplicates_tmp_boundary;
+                working_duplicates[duplicates_tmp_boundary] = curid;
                 continue;
             }
         }
 
+        num_children_to_copy = 0;
+        num_duplicates_to_copy = 0;
         while (levels.size() > 1 && levels.back().end < curend) {
             const auto& curlevel = levels.back();
             process_level(curlevel);
             levels.pop_back();
         }
+        left_shift_indices();
 
         auto used = working_list.size();
         working_list.emplace_back(curid);
         working_start.push_back(curstart);
         working_end.push_back(curend);
 
-        auto parent_children_pos = levels.back().children_start_temp;
-        auto parent_duplicates_pos = levels.back().duplicates_start_temp;
-        --parent_children_pos;
-        working_children[parent_children_pos] = used;
-        levels.back().children_start_temp = parent_children_pos;
-
+        ++(levels.back().num_children);
+        --children_tmp_boundary;
+        working_children[children_tmp_boundary] = used;
         levels.emplace_back(used, curend);
-        auto& latest = levels.back();
-        latest.children_start_temp = parent_children_pos;
-        latest.children_end_temp = parent_children_pos;
-        latest.duplicates_start_temp = parent_duplicates_pos;
-        latest.duplicates_end_temp = parent_duplicates_pos;
 
         last_start = curstart;
         last_end = curend;
     }
 
+    num_children_to_copy = 0;
+    num_duplicates_to_copy = 0;
     while (levels.size() > 1) { // processing all remaining levels except for the root node, which we'll handle separately.
         const auto& curlevel = levels.back();
         process_level(curlevel);
         levels.pop_back();
     }
+    left_shift_indices();
 
     intervals.clear(); // freeing up some memory for more allocations in the next section.
     intervals.shrink_to_fit();
 
-//    t2 = std::chrono::high_resolution_clock::now();
-//    std::cout << "first pass takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
+    t2 = std::chrono::high_resolution_clock::now();
+    std::cout << "first pass takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
 
-//    t1 = std::chrono::high_resolution_clock::now();
+    t1 = std::chrono::high_resolution_clock::now();
 
     // We convert the `working_list` into the output format where the children's start/end coordinates are laid out contiguously.
     // This should make for an easier binary search (allowing us to use std::lower_bound and friends) and improve cache locality.
@@ -256,11 +260,9 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
     };
     std::vector<Level2> history;
 
-    auto root_children_start = levels.front().children_start_temp;
-    auto root_children_end = levels.front().children_end_temp;
-    output.root_children = root_children_end - root_children_start;
+    output.root_children = levels.front().num_children;
     Index_ output_children_used = output.root_children;
-    history.emplace_back(root_children_end, root_children_start, 0);
+    history.emplace_back(working_children.size(), children_tmp_boundary, 0);
 
     while (1) {
         auto& current_state = history.back();
@@ -309,8 +311,8 @@ Nclist<Index_, Position_> build_internal(std::vector<Triplet<Index_, Position_> 
             history.emplace_back(children_old_end, children_old_start, current.children_start);
         }
     }
-//    t2 = std::chrono::high_resolution_clock::now();
-//    std::cout << "second pass takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
+    t2 = std::chrono::high_resolution_clock::now();
+    std::cout << "second pass takes " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << std::endl;
 
     return output;
 }
