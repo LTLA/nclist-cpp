@@ -6,14 +6,14 @@
 
 ## Overview
 
-This library implements the [nested containment list (NCList)](https://doi.org/10.1093/bioinformatics/btl647) algorithm for interval queries.
-Specifically, the aim is to find all "subject" ranges that overlap a "query" range, which is a common task when analyzing genomics data.
+This header-only library implements the [nested containment list (NCList)](https://doi.org/10.1093/bioinformatics/btl647) algorithm for interval queries.
+Specifically, the aim is to find all "subject" intervals that overlap a "query" interval, which is a common task when analyzing genomics data.
 The interface and capabilities of this library are based on the `findOverlaps()` function from the [**IRanges**](https://bioconductor.org/packages/IRanges) R package.
 We support overlaps with a maximum gap or minimum overlap, as well as overlaps of different types - matching starts/ends, within/extends, etc.
 
 ## Quick start
 
-Given an array of starts/ends for the subject ranges, we build the nested containment list:
+Given an array of starts/ends for the subject intervals, we build the nested containment list:
 
 ```cpp
 // The i-th subject interval is defined as '[starts[i], ends[i])'.
@@ -24,7 +24,7 @@ std::vector<int> ends   { 8, 25, 30 };
 auto subjects = nclist::build(3, starts.data(), ends.data());
 ```
 
-Then we check for overlaps with our query range:
+Then we check for overlaps with our query interval:
 
 ```cpp
 nclist::OverlapsAnyWorkspace<int> workspace;
@@ -32,7 +32,7 @@ nclist::OverlapsAnyParameters<int> params;
 std::vector<int> matches;
 
 // Checking for overlaps to `[6, 16)`.
-// 'matches' is filled with the indices of the matching subject range.
+// 'matches' is filled with the indices of the matching subject interval.
 nclist::overlaps_any(subjects, 6, 16, params, workspace, matches);
 
 // Performing another query.
@@ -44,7 +44,7 @@ Check out the [reference documentation](https://ltla.github.io/nclist-cpp) for m
 
 ## Setting parameters
 
-Say we only want to report overlaps where the length of the overlapping subrange is not below some threshold.
+Say we only want to report overlaps where the length of the overlapping subinterval is not below some threshold.
 We can do so with the `min_overlaps=` parameter:
 
 ```cpp
@@ -52,10 +52,10 @@ params.min_overlaps = 10;
 nclist::overlaps_any(subjects, 20, 30, params, workspace, matches);
 ```
 
-We can also detect "overlaps" where the query and subject ranges are separated by a gap that is no greater than some threshold:
+We can also detect "overlaps" where the query and subject intervals are separated by a gap that is no greater than some threshold:
 
 ```cpp
-// 'max_gap = 0' means that contiguous ranges are considered "overlapping".
+// 'max_gap = 0' means that contiguous intervals are considered "overlapping".
 params.max_gap = 0;
 nclist::overlaps_any(subjects, 1, 5, params, workspace, matches);
 
@@ -63,8 +63,8 @@ params.max_gap = 10;
 nclist::overlaps_any(subjects, 40, 50, params, workspace, matches);
 ```
 
-In some cases, we only want to determine if any overlap exists, without concern for the identity of the overlapping subject ranges.
-This can be achieved with the `quit_on_first=` parameter, which will return upon finding the first overlapping range for greater efficiency.
+In some cases, we only want to determine if any overlap exists, without concern for the identity of the overlapping subject intervals.
+This can be achieved with the `quit_on_first=` parameter, which will return upon finding the first overlapping interval for greater efficiency.
 
 ```cpp
 params.quit_on_first = true;
@@ -74,9 +74,9 @@ matches.empty();
 
 ## Overlap types
 
-The `overlaps_any()` function will look for any overlaps between the query and subject ranges.
+The `overlaps_any()` function will look for any overlaps between the query and subject intervals.
 However, other functions can also be used to report different types of overlaps.
-Perhaps we want to consider overlaps where the query range lies "within" (i.e., is a subrange of) a subject range:
+Perhaps we want to consider overlaps where the query interval lies "within" (i.e., is a subinterval of) a subject interval:
 
 ```cpp
 nclist::OverlapsWithinWorkspace<int> wworkspace;
@@ -84,7 +84,7 @@ nclist::OverlapsWithinParameters<int> wparams;
 nclist::overlaps_within(subjects, 20, 28, wparams, wworkspace, matches);
 ```
 
-Or we only care about those subject ranges with the same start position:
+Or we only care about those subject intervals with the same start position:
 
 ```cpp
 nclist::OverlapsStartWorkspace<int> wworkspace;
@@ -99,7 +99,7 @@ so be sure to consult the [relevant documentation](https://ltla.github.io/nclist
 
 ## Position types
 
-This library will work with double-precision coordinates for the range positions:
+This library will work with double-precision coordinates for the interval coordinates:
 
 ```cpp
 // Again, remember that 'ends' are not inclusive.
@@ -114,13 +114,13 @@ std::vector<int> matches;
 nclist::overlaps_any(subjects, 14.4, 29.5, params, workspace, matches);
 ```
 
-The subject range indices can also be changed from `int` to other integer types.
-Larger types may be preferred if there are more ranges than can be represented by `int`, at the cost of some increased memory usage.
+The subject interval indices (used to store the overlap results in `matches`) can also be changed from `int` to other integer types like `std::size_t`.
+Larger types may be preferred if there are more intervals than can be represented by `int`, at the cost of some increased memory usage.
 
-## Customizing subject ranges 
+## Custom subject intervals
 
-We can use `build_custom()` to handle subject coordinates in formats other than a C-style array.
-For example, we might have stored the subject coordinates in a `std::deque` for more efficient expansion:
+The `build_custom()` function accepts subject interval coordinates in formats other than a C-style array.
+For example, we might have stored the coordinates in a `std::deque` for more efficient expansion:
 
 ```cpp
 std::deque<int> dq_starts { 5, 10, 20 };
@@ -129,8 +129,8 @@ auto dq_subjects = nclist::build_custom(3, dq_starts, dq_ends);
 ```
 
 A more interesting application involves adjusting the coordinates without allocating a new array.
-For example, many genomic intervals are stored with inclusive ends but `build()` expects exclusive ends.
-This is accommodated by creating a custom class that increments the end position on the fly:
+For example, many genomic intervals are reported with inclusive ends (e.g., in GFF and SAM files) but `build()` expects exclusive ends.
+This is accommodated in `build_custom()` by creating a custom class that increments the end position on the fly:
 
 ```cpp
 struct Incrementer {
@@ -154,7 +154,7 @@ include(FetchContent)
 FetchContent_Declare(
   nclist
   GIT_REPOSITORY https://github.com/LTLA/nclist
-  GIT_TAG master # or any version of interest 
+  GIT_TAG master # replaced with a pinned version
 )
 
 FetchContent_MakeAvailable(nclist)
