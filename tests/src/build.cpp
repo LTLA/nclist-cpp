@@ -3,6 +3,7 @@
 #include <vector>
 #include <random>
 #include <cstddef>
+#include <cstdint>
 
 #include "nclist/build.hpp"
 #include "nclist/overlaps_any.hpp"
@@ -108,4 +109,49 @@ INSTANTIATE_TEST_SUITE_P(
     )
 );
 
+TEST(Build, SafeResize) {
+    struct MockVector {
+        MockVector(std::uint8_t s) : s(s) {}
+        std::uint8_t size() const {
+            return s;
+        }
+        void resize(std::uint8_t new_s) {
+            s = new_s;
+        }
+        std::uint8_t s;
+    };
 
+    MockVector y(0);
+    nclist::safe_resize(y, 10);
+    EXPECT_EQ(y.size(), 10);
+
+    std::string msg;
+    try {
+        nclist::safe_resize(y, 1000);
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("resize") != std::string::npos);
+}
+
+struct MockIterator {
+    MockIterator(std::size_t pos) : pos(pos) {}
+    std::size_t pos;
+};
+
+std::uint8_t operator-(const MockIterator& left, const MockIterator& right) {
+    return right.pos - left.pos;
+}
+
+TEST(Build, CheckSafePtrdiff) {
+    nclist::check_safe_ptrdiff<MockIterator>(static_cast<std::int8_t>(10));
+    nclist::check_safe_ptrdiff<MockIterator>(10);
+
+    std::string msg;
+    try {
+        nclist::check_safe_ptrdiff<MockIterator>(1000);
+    } catch (std::exception& e) {
+        msg = e.what();
+    }
+    EXPECT_TRUE(msg.find("iterator subtraction") != std::string::npos);
+}
