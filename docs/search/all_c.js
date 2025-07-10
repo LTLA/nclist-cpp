@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['setting_20parameters_0',['Setting parameters',['../index.html#autotoc_md3',1,'']]],
-  ['start_1',['Quick start',['../index.html#autotoc_md2',1,'']]],
-  ['subject_20ranges_2',['Customizing subject ranges',['../index.html#autotoc_md6',1,'']]]
+  ['tt_0',['tt',['../index.html#autotoc_md8',1,'CMake with &lt;tt&gt;FetchContent&lt;/tt&gt;'],['../index.html#autotoc_md9',1,'CMake with &lt;tt&gt;find_package()&lt;/tt&gt;']]],
+  ['tt_20fetchcontent_20tt_1',['CMake with &lt;tt&gt;FetchContent&lt;/tt&gt;',['../index.html#autotoc_md8',1,'']]],
+  ['tt_20find_5fpackage_20tt_2',['CMake with &lt;tt&gt;find_package()&lt;/tt&gt;',['../index.html#autotoc_md9',1,'']]],
+  ['types_3',['types',['../index.html#autotoc_md4',1,'Overlap types'],['../index.html#autotoc_md5',1,'Position types']]]
 ];
