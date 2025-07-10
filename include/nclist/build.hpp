@@ -78,10 +78,15 @@ using ArrayElement = typename std::remove_const<typename std::remove_reference<d
  */
 template<class Container_, typename Size_>
 void safe_resize(Container_& container, Size_ size) {
-    container.resize(size);
-    if (static_cast<typename std::make_unsigned<Size_>::type>(size) != container.size()) {
-        throw std::runtime_error("failed to resize container to specified size");
+    typedef decltype(container.size()) Csize;
+    constexpr Csize max_csize = std::numeric_limits<Csize>::max();
+    constexpr Size_ max_size = std::numeric_limits<Size_>::max();
+    if constexpr(static_cast<typename std::make_unsigned<Size_>::type>(max_size) > static_cast<typename std::make_unsigned<Csize>::type>(max_csize)) {
+        if (static_cast<typename std::make_unsigned<Size_>::type>(size) > static_cast<typename std::make_unsigned<Csize>::type>(max_csize)) {
+            throw std::runtime_error("failed to resize container to specified size");
+        }
     }
+    container.resize(size);
 }
 
 template<typename Iterator_, typename Size_>
@@ -254,7 +259,9 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
     // We want to ensure that the difference fits in the difference type without overflow.
     // This can be guaranteed by checking that the difference type is large enough to hold the vector's full length.
     // We only need to check output.starts as output.ends is the same type so will have the same difference type.
-    check_safe_ptrdiff<decltype(output.starts.begin())>(working_list.size());
+    // We also cast to Index_ as this gives us a chance to avoid the check at compile time,
+    // given that working_list.size() <= of_interest.size() == num_intervals/num_subset.
+    check_safe_ptrdiff<decltype(output.starts.begin())>(static_cast<Index_>(working_list.size()));
 
     struct Level2 {
         Level2() = default;

@@ -122,8 +122,10 @@ TEST(Build, SafeResize) {
     };
 
     MockVector y(0);
-    nclist::safe_resize(y, 10);
+    nclist::safe_resize(y, static_cast<std::int8_t>(10));
     EXPECT_EQ(y.size(), 10);
+    nclist::safe_resize(y, 20);
+    EXPECT_EQ(y.size(), 20);
 
     std::string msg;
     try {
