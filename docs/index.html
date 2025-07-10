@@ -103,7 +103,7 @@ Quick start</h1>
 <div class="line">std::vector&lt;int&gt; ends   { 8, 25, 30 };</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">auto</span> subjects = <a class="code hl_function" href="namespacenclist.html#af017ae50c229346e3cf8e41599fbb5c0">nclist::build</a>(3, starts.data(), ends.data());</div>
-<div class="ttc" id="anamespacenclist_html_af017ae50c229346e3cf8e41599fbb5c0"><div class="ttname"><a href="namespacenclist.html#af017ae50c229346e3cf8e41599fbb5c0">nclist::build</a></div><div class="ttdeci">Nclist&lt; Index_, Position_ &gt; build(Index_ num_subset, const Index_ *subset, const Position_ *starts, const Position_ *ends)</div><div class="ttdef"><b>Definition</b> build.hpp:386</div></div>
+<div class="ttc" id="anamespacenclist_html_af017ae50c229346e3cf8e41599fbb5c0"><div class="ttname"><a href="namespacenclist.html#af017ae50c229346e3cf8e41599fbb5c0">nclist::build</a></div><div class="ttdeci">Nclist&lt; Index_, Position_ &gt; build(Index_ num_subset, const Index_ *subset, const Position_ *starts, const Position_ *ends)</div><div class="ttdef"><b>Definition</b> build.hpp:393</div></div>
 </div><!-- fragment --><p>Then we check for overlaps with our query interval:</p>
 <div class="fragment"><div class="line"><a class="code hl_struct" href="structnclist_1_1OverlapsAnyWorkspace.html">nclist::OverlapsAnyWorkspace&lt;int&gt;</a> workspace;</div>
 <div class="line"><a class="code hl_struct" href="structnclist_1_1OverlapsAnyParameters.html">nclist::OverlapsAnyParameters&lt;int&gt;</a> params;</div>
@@ -175,7 +175,7 @@ Custom subject intervals</h1>
 <div class="fragment"><div class="line">std::deque&lt;int&gt; dq_starts { 5, 10, 20 };</div>
 <div class="line">std::deque&lt;int&gt; dq_ends   { 8, 25, 30 };</div>
 <div class="line"><span class="keyword">auto</span> dq_subjects = <a class="code hl_function" href="namespacenclist.html#a6c7b69a3446e7d037a2d406f67909167">nclist::build_custom</a>(3, dq_starts, dq_ends);</div>
-<div class="ttc" id="anamespacenclist_html_a6c7b69a3446e7d037a2d406f67909167"><div class="ttname"><a href="namespacenclist.html#a6c7b69a3446e7d037a2d406f67909167">nclist::build_custom</a></div><div class="ttdeci">Nclist&lt; Index_, ArrayElement&lt; StartArray_ &gt; &gt; build_custom(Index_ num_subset, const Index_ *subset, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</div><div class="ttdef"><b>Definition</b> build.hpp:343</div></div>
+<div class="ttc" id="anamespacenclist_html_a6c7b69a3446e7d037a2d406f67909167"><div class="ttname"><a href="namespacenclist.html#a6c7b69a3446e7d037a2d406f67909167">nclist::build_custom</a></div><div class="ttdeci">Nclist&lt; Index_, ArrayElement&lt; StartArray_ &gt; &gt; build_custom(Index_ num_subset, const Index_ *subset, const StartArray_ &amp;starts, const EndArray_ &amp;ends)</div><div class="ttdef"><b>Definition</b> build.hpp:350</div></div>
 </div><!-- fragment --><p>A more interesting application involves adjusting the coordinates without allocating a new array. For example, many genomic intervals are reported with inclusive ends (e.g., in GFF and SAM files) but <code>build()</code> expects exclusive ends. This is accommodated in <code>build_custom()</code> by creating a custom class that increments the end position on the fly:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Incrementer {</div>
 <div class="line">    Incrementer(<span class="keyword">const</span> std::vector&lt;int&gt;&amp; v) : original(v) {}</div>
