@@ -8,6 +8,7 @@
 #include "overlaps_extend.hpp"
 #include "overlaps_start.hpp"
 #include "overlaps_within.hpp"
+#include "nearest.hpp"
 
 /**
  * @file nclist.hpp
