@@ -18,6 +18,16 @@
     <includes id="overlaps__extend_8hpp" name="overlaps_extend.hpp" local="yes" import="no" module="no" objc="no">overlaps_extend.hpp</includes>
     <includes id="overlaps__start_8hpp" name="overlaps_start.hpp" local="yes" import="no" module="no" objc="no">overlaps_start.hpp</includes>
     <includes id="overlaps__within_8hpp" name="overlaps_within.hpp" local="yes" import="no" module="no" objc="no">overlaps_within.hpp</includes>
+    <includes id="nearest_8hpp" name="nearest.hpp" local="yes" import="no" module="no" objc="no">nearest.hpp</includes>
+    <namespace>nclist</namespace>
+  </compound>
+  <compound kind="file">
+    <name>nearest.hpp</name>
+    <path>nclist/</path>
+    <filename>nearest_8hpp.html</filename>
+    <includes id="build_8hpp" name="build.hpp" local="yes" import="no" module="no" objc="no">build.hpp</includes>
+    <class kind="struct">nclist::NearestWorkspace</class>
+    <class kind="struct">nclist::NearestParameters</class>
     <namespace>nclist</namespace>
   </compound>
   <compound kind="file">
@@ -79,6 +89,23 @@
     <filename>structnclist_1_1Nclist.html</filename>
     <templarg>typename Index_</templarg>
     <templarg>typename Position_</templarg>
+  </compound>
+  <compound kind="struct">
+    <name>nclist::NearestParameters</name>
+    <filename>structnclist_1_1NearestParameters.html</filename>
+    <templarg>typename Position_</templarg>
+    <member kind="variable">
+      <type>bool</type>
+      <name>quit_on_first</name>
+      <anchorfile>structnclist_1_1NearestParameters.html</anchorfile>
+      <anchor>ab5ca4984a4b8adb5b31e89b741a23ce8</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>nclist::NearestWorkspace</name>
+    <filename>structnclist_1_1NearestWorkspace.html</filename>
+    <templarg>typename Index_</templarg>
   </compound>
   <compound kind="struct">
     <name>nclist::OverlapsAnyParameters</name>
@@ -270,6 +297,8 @@
     <name>nclist</name>
     <filename>namespacenclist.html</filename>
     <class kind="struct">nclist::Nclist</class>
+    <class kind="struct">nclist::NearestParameters</class>
+    <class kind="struct">nclist::NearestWorkspace</class>
     <class kind="struct">nclist::OverlapsAnyParameters</class>
     <class kind="struct">nclist::OverlapsAnyWorkspace</class>
     <class kind="struct">nclist::OverlapsEndParameters</class>
@@ -316,6 +345,13 @@
       <anchorfile>namespacenclist.html</anchorfile>
       <anchor>aa77737736d32ca4e0fec076d92c64665</anchor>
       <arglist>(Index_ num_intervals, const Position_ *starts, const Position_ *ends)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>nearest</name>
+      <anchorfile>namespacenclist.html</anchorfile>
+      <anchor>af720d430bc215ae05f621304f182a56d</anchor>
+      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const NearestParameters&lt; Position_ &gt; &amp;params, NearestWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

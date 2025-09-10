@@ -102,6 +102,12 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pre-built nested containment list.  <a href="structnclist_1_1Nclist.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structnclist_1_1NearestParameters.html">NearestParameters</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameters for <code><a class="el" href="#af720d430bc215ae05f621304f182a56d">nearest()</a></code>.  <a href="structnclist_1_1NearestParameters.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structnclist_1_1NearestWorkspace.html">NearestWorkspace</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Workspace for <code><a class="el" href="#af720d430bc215ae05f621304f182a56d">nearest()</a></code>.  <a href="structnclist_1_1NearestWorkspace.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structnclist_1_1OverlapsAnyParameters.html">OverlapsAnyParameters</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Parameters for <code><a class="el" href="#ade7d2e27bd85d84a0cd210d3fcce7335">overlaps_any()</a></code>.  <a href="structnclist_1_1OverlapsAnyParameters.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -159,6 +165,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aa77737736d32ca4e0fec076d92c64665" id="r_aa77737736d32ca4e0fec076d92c64665"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
 <tr class="memitem:aa77737736d32ca4e0fec076d92c64665"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#aa77737736d32ca4e0fec076d92c64665">build</a> (Index_ num_intervals, const Position_ *starts, const Position_ *ends)</td></tr>
 <tr class="separator:aa77737736d32ca4e0fec076d92c64665"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af720d430bc215ae05f621304f182a56d" id="r_af720d430bc215ae05f621304f182a56d"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
+<tr class="memitem:af720d430bc215ae05f621304f182a56d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af720d430bc215ae05f621304f182a56d">nearest</a> (const <a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const <a class="el" href="structnclist_1_1NearestParameters.html">NearestParameters</a>&lt; Position_ &gt; &amp;params, <a class="el" href="structnclist_1_1NearestWorkspace.html">NearestWorkspace</a>&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</td></tr>
+<tr class="separator:af720d430bc215ae05f621304f182a56d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade7d2e27bd85d84a0cd210d3fcce7335" id="r_ade7d2e27bd85d84a0cd210d3fcce7335"><td class="memTemplParams" colspan="2">template&lt;typename Index_ , typename Position_ &gt; </td></tr>
 <tr class="memitem:ade7d2e27bd85d84a0cd210d3fcce7335"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#ade7d2e27bd85d84a0cd210d3fcce7335">overlaps_any</a> (const <a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const <a class="el" href="structnclist_1_1OverlapsAnyParameters.html">OverlapsAnyParameters</a>&lt; Position_ &gt; &amp;params, <a class="el" href="structnclist_1_1OverlapsAnyWorkspace.html">OverlapsAnyWorkspace</a>&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</td></tr>
 <tr class="separator:ade7d2e27bd85d84a0cd210d3fcce7335"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -393,6 +402,68 @@ template&lt;typename Index_ , class StartArray_ , class EndArray_ &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> containing the specified subset of subject intervals. </dd></dl>
+
+</div>
+</div>
+<a id="af720d430bc215ae05f621304f182a56d" name="af720d430bc215ae05f621304f182a56d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af720d430bc215ae05f621304f182a56d">&#9670;&#160;</a></span>nearest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Index_ , typename Position_ &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void nclist::nearest </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structnclist_1_1Nclist.html">Nclist</a>&lt; Index_, Position_ &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>subject</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Position_</td>          <td class="paramname"><span class="paramname"><em>query_start</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Position_</td>          <td class="paramname"><span class="paramname"><em>query_end</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structnclist_1_1NearestParameters.html">NearestParameters</a>&lt; Position_ &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structnclist_1_1NearestWorkspace.html">NearestWorkspace</a>&lt; Index_ &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>workspace</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::vector&lt; Index_ &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>matches</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Find subject intervals that are nearest to the query interval. If any overlaps are present, all overlapping intervals are reported. If no overlaps are present, the subject interval with the smallest gap to the query is reported. A gap is defined as the distance between the query start and subject end (for queries after the subject) or the subject start and the query end (otherwise). If multiple subjects have the same gap, all ties are reported.</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
+    <tr><td class="paramname">Position_</td><td>Numeric type for the start/end positions of each interval.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir"></td><td class="paramname">subject</td><td>An <code><a class="el" href="structnclist_1_1Nclist.html" title="Pre-built nested containment list.">Nclist</a></code> of subject intervals, typically built with <code><a class="el" href="#af017ae50c229346e3cf8e41599fbb5c0">build()</a></code>. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query interval. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query interval. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">params</td><td>Parameters for the search. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">workspace</td><td>Workspace for intermediate data structures. This can be default-constructed and re-used across <code><a class="el" href="#ade7d2e27bd85d84a0cd210d3fcce7335">overlaps_any()</a></code> calls. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of indices of the nearest subject intervals to the query interval. Indices are reported in arbitrary order. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
