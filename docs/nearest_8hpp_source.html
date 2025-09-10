@@ -259,81 +259,81 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        }</div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    }</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>}</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Position_&gt;</div>
-<div class="foldopen" id="foldopen00216" data-start="{" data-end="}">
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno"><a class="line" href="namespacenclist.html#af720d430bc215ae05f621304f182a56d">  216</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespacenclist.html#af720d430bc215ae05f621304f182a56d">nearest</a>(</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structnclist_1_1Nclist.html">Nclist&lt;Index_, Position_&gt;</a>&amp; subject,</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    Position_ query_start,</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    Position_ query_end,</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structnclist_1_1NearestParameters.html">NearestParameters&lt;Position_&gt;</a>&amp; params,</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    <a class="code hl_struct" href="structnclist_1_1NearestWorkspace.html">NearestWorkspace&lt;Index_&gt;</a>&amp; workspace,</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>    std::vector&lt;Index_&gt;&amp; matches)</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>{</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>    matches.clear();</div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    <span class="keywordflow">if</span> (subject.root_children == 0) {</div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>        <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    }</div>
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span> </div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <span class="keyword">const</span> <span class="keyword">auto</span> root_index = nearest_overlaps(subject, query_start, query_end, params, workspace, matches);</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="keywordflow">if</span> (!matches.empty()) {</div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>        <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>    }</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span><span class="comment">    /****************************************</span></div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span><span class="comment">     * If there are no overlaps, checking the distance to the first subject interval before or after the query.</span></div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span><span class="comment">     * &#39;root_index&#39; is initially defined in nearest_overlaps() as the upper bound of &#39;query_start&#39; on the subject ends of the root node of the NCList.</span></div>
-<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="comment">     * If there are no overlaps, this definition won&#39;t change and the same value will be returned to nearest().</span></div>
-<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="comment">     * At this point, &#39;root_index&#39; defines the first subject interval on the root node that starts after the query.</span></div>
-<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span><span class="comment">     * Conversely, &#39;root_index - 1&#39; is the last subject interval on the root node that ends before the query.</span></div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="comment">     * Thus, to find the nearest following interval, only the &#39;root_index&#39;-th interval on the root node needs to be considered as it will have the start closest to &#39;query_end&#39;.</span></div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="comment">     * All later intervals on the root node will have later starts, otherwise they would be nested within the &#39;root_index`-th interval.</span></div>
-<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span><span class="comment">     * We still need to check the descendents of the &#39;root_index&#39;-th interval but we only need to care about the first child at each level of the lineage.</span></div>
-<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="comment">     * In particular, we check whether it has the same start coordinate as its parent;</span></div>
-<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span><span class="comment">     * if not, we know that the rest of that lineage will start after the &#39;root_index&#39;-th interval and we terminate the search.</span></div>
-<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="comment">     * Similarly, to find the nearest preceding interval, only the &#39;root_index - 1&#39;-th interval on the root node needs to be considered as it will have the end closest to &#39;query_start&#39;.</span></div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span><span class="comment">     * All earlier intervals on the root node will have earlier ends, otherwise they would be nested within the &#39;root_index - 1`-th interval.</span></div>
-<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span><span class="comment">     * We still need to check the descendents of the &#39;root_index - 1&#39;-th interval but we only need to care about the last child at each level of the lineage.</span></div>
-<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span><span class="comment">     * In particular, we check whether it has the same end coordinate as its parent; </span></div>
-<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span><span class="comment">     * if not, we know that the rest of that lineage will end before the &#39;root_index - 1&#39;-th interval and we terminate the search.</span></div>
-<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span><span class="comment">     * Note that this function behaves a little strangely when a zero-width query is supplied and there is an identical zero-width subject interval. </span></div>
-<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span><span class="comment">     * Specifically, the latter may be treated as preceding or following the former, depending on whether they are nested in other subject intervals.</span></div>
-<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span><span class="comment">     * Fortunately, this doesn&#39;t have any bearing on the final outcome as it will still the nearest interval to the query in either case.</span></div>
-<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span><span class="comment">     *</span></div>
-<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="comment">     ****************************************/</span></div>
-<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span> </div>
-<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    std::optional&lt;Position_&gt; to_previous, to_next; </div>
-<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>    <span class="keywordflow">if</span> (root_index) {</div>
-<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>        to_previous = query_start - subject.ends[root_index - 1];</div>
-<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>    }</div>
-<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    <span class="keywordflow">if</span> (root_index &lt; subject.root_children) {</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>        to_next = subject.starts[root_index] - query_end; </div>
-<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>    }</div>
-<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span> </div>
-<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>    <span class="keywordflow">if</span> (!to_next.has_value() || (to_previous.has_value() &amp;&amp; *to_previous &lt;= *to_next)) {</div>
-<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>        nearest_before(subject, root_index - 1, params, matches);</div>
-<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        <span class="keywordflow">if</span> (!matches.empty() &amp;&amp; params.<a class="code hl_variable" href="structnclist_1_1NearestParameters.html#ab5ca4984a4b8adb5b31e89b741a23ce8">quit_on_first</a>) {</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>            <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>        }</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    }</div>
-<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    <span class="keywordflow">if</span> (!to_previous.has_value() || (to_next.has_value() &amp;&amp; *to_next &lt;= *to_previous)) {</div>
-<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>        nearest_after(subject, root_index, params, matches);</div>
-<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>        <span class="keywordflow">if</span> (!matches.empty() &amp;&amp; params.<a class="code hl_variable" href="structnclist_1_1NearestParameters.html#ab5ca4984a4b8adb5b31e89b741a23ce8">quit_on_first</a>) {</div>
-<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>            <span class="keywordflow">return</span>;</div>
-<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>        }</div>
-<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    }</div>
-<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>}</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Position_&gt;</div>
+<div class="foldopen" id="foldopen00217" data-start="{" data-end="}">
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno"><a class="line" href="namespacenclist.html#af720d430bc215ae05f621304f182a56d">  217</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespacenclist.html#af720d430bc215ae05f621304f182a56d">nearest</a>(</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structnclist_1_1Nclist.html">Nclist&lt;Index_, Position_&gt;</a>&amp; subject,</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    Position_ query_start,</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>    Position_ query_end,</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structnclist_1_1NearestParameters.html">NearestParameters&lt;Position_&gt;</a>&amp; params,</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>    <a class="code hl_struct" href="structnclist_1_1NearestWorkspace.html">NearestWorkspace&lt;Index_&gt;</a>&amp; workspace,</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    std::vector&lt;Index_&gt;&amp; matches)</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>{</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    matches.clear();</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>    <span class="keywordflow">if</span> (subject.root_children == 0) {</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>    }</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span> </div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="keyword">const</span> <span class="keyword">auto</span> root_index = nearest_overlaps(subject, query_start, query_end, params, workspace, matches);</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <span class="keywordflow">if</span> (!matches.empty()) {</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>        <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    }</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span> </div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span><span class="comment">    /****************************************</span></div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span><span class="comment">     * If there are no overlaps, checking the distance to the first subject interval before or after the query.</span></div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span><span class="comment">     * &#39;root_index&#39; is initially defined in nearest_overlaps() as the upper bound of &#39;query_start&#39; on the subject ends of the root node of the NCList.</span></div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span><span class="comment">     * If there are no overlaps, this definition won&#39;t change and the same value will be returned to nearest().</span></div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span><span class="comment">     * At this point, &#39;root_index&#39; defines the first subject interval on the root node that starts after the query.</span></div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span><span class="comment">     * Conversely, &#39;root_index - 1&#39; is the last subject interval on the root node that ends before the query.</span></div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span><span class="comment">     * Thus, to find the nearest following interval, only the &#39;root_index&#39;-th interval on the root node needs to be considered as it will have the start closest to &#39;query_end&#39;.</span></div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span><span class="comment">     * All later intervals on the root node will have later starts, otherwise they would be nested within the &#39;root_index`-th interval.</span></div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span><span class="comment">     * We still need to check the descendents of the &#39;root_index&#39;-th interval but we only need to care about the first child at each level of the lineage.</span></div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span><span class="comment">     * In particular, we check whether it has the same start coordinate as its parent;</span></div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span><span class="comment">     * if not, we know that the rest of that lineage will start after the &#39;root_index&#39;-th interval and we terminate the search.</span></div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span><span class="comment">     * Similarly, to find the nearest preceding interval, only the &#39;root_index - 1&#39;-th interval on the root node needs to be considered as it will have the end closest to &#39;query_start&#39;.</span></div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span><span class="comment">     * All earlier intervals on the root node will have earlier ends, otherwise they would be nested within the &#39;root_index - 1`-th interval.</span></div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span><span class="comment">     * We still need to check the descendents of the &#39;root_index - 1&#39;-th interval but we only need to care about the last child at each level of the lineage.</span></div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span><span class="comment">     * In particular, we check whether it has the same end coordinate as its parent; </span></div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span><span class="comment">     * if not, we know that the rest of that lineage will end before the &#39;root_index - 1&#39;-th interval and we terminate the search.</span></div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span><span class="comment">     * Note that this function behaves a little strangely when a zero-width query is supplied and there is an identical zero-width subject interval. </span></div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span><span class="comment">     * Specifically, the latter may be treated as preceding or following the former, depending on whether they are nested in other subject intervals.</span></div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span><span class="comment">     * Fortunately, this doesn&#39;t have any bearing on the final outcome as it will still the nearest interval to the query in either case.</span></div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="comment">     *</span></div>
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span><span class="comment">     ****************************************/</span></div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span> </div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>    std::optional&lt;Position_&gt; to_previous, to_next; </div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>    <span class="keywordflow">if</span> (root_index) {</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>        to_previous = query_start - subject.ends[root_index - 1];</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    }</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>    <span class="keywordflow">if</span> (root_index &lt; subject.root_children) {</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>        to_next = subject.starts[root_index] - query_end; </div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>    }</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span> </div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>    <span class="keywordflow">if</span> (!to_next.has_value() || (to_previous.has_value() &amp;&amp; *to_previous &lt;= *to_next)) {</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        nearest_before(subject, root_index - 1, params, matches);</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>        <span class="keywordflow">if</span> (!matches.empty() &amp;&amp; params.<a class="code hl_variable" href="structnclist_1_1NearestParameters.html#ab5ca4984a4b8adb5b31e89b741a23ce8">quit_on_first</a>) {</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>        }</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>    }</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>    <span class="keywordflow">if</span> (!to_previous.has_value() || (to_next.has_value() &amp;&amp; *to_next &lt;= *to_previous)) {</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>        nearest_after(subject, root_index, params, matches);</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>        <span class="keywordflow">if</span> (!matches.empty() &amp;&amp; params.<a class="code hl_variable" href="structnclist_1_1NearestParameters.html#ab5ca4984a4b8adb5b31e89b741a23ce8">quit_on_first</a>) {</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>            <span class="keywordflow">return</span>;</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>        }</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    }</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>}</div>
 </div>
-<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span> </div>
-<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>}</div>
-<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span> </div>
-<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span> </div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>}</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span> </div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="abuild_8hpp_html"><div class="ttname"><a href="build_8hpp.html">build.hpp</a></div><div class="ttdoc">Build a nested containment list.</div></div>
 <div class="ttc" id="anamespacenclist_html"><div class="ttname"><a href="namespacenclist.html">nclist</a></div><div class="ttdoc">Header-only library for nested containment lists.</div><div class="ttdef"><b>Definition</b> build.hpp:17</div></div>
-<div class="ttc" id="anamespacenclist_html_af720d430bc215ae05f621304f182a56d"><div class="ttname"><a href="namespacenclist.html#af720d430bc215ae05f621304f182a56d">nclist::nearest</a></div><div class="ttdeci">void nearest(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const NearestParameters&lt; Position_ &gt; &amp;params, NearestWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</div><div class="ttdef"><b>Definition</b> nearest.hpp:216</div></div>
+<div class="ttc" id="anamespacenclist_html_af720d430bc215ae05f621304f182a56d"><div class="ttname"><a href="namespacenclist.html#af720d430bc215ae05f621304f182a56d">nclist::nearest</a></div><div class="ttdeci">void nearest(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const NearestParameters&lt; Position_ &gt; &amp;params, NearestWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</div><div class="ttdef"><b>Definition</b> nearest.hpp:217</div></div>
 <div class="ttc" id="astructnclist_1_1Nclist_html"><div class="ttname"><a href="structnclist_1_1Nclist.html">nclist::Nclist</a></div><div class="ttdoc">Pre-built nested containment list.</div><div class="ttdef"><b>Definition</b> build.hpp:28</div></div>
 <div class="ttc" id="astructnclist_1_1NearestParameters_html"><div class="ttname"><a href="structnclist_1_1NearestParameters.html">nclist::NearestParameters</a></div><div class="ttdoc">Parameters for nearest().</div><div class="ttdef"><b>Definition</b> nearest.hpp:48</div></div>
 <div class="ttc" id="astructnclist_1_1NearestParameters_html_ab5ca4984a4b8adb5b31e89b741a23ce8"><div class="ttname"><a href="structnclist_1_1NearestParameters.html#ab5ca4984a4b8adb5b31e89b741a23ce8">nclist::NearestParameters::quit_on_first</a></div><div class="ttdeci">bool quit_on_first</div><div class="ttdef"><b>Definition</b> nearest.hpp:53</div></div>

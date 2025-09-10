@@ -445,7 +445,7 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Find subject intervals that are nearest to the query interval. If any overlaps are present, all overlapping intervals are reported. If no overlaps are present, the subject interval with the smallest gap to the query is reported. A gap is defined as the distance between the query start and subject end (for queries after the subject) or the subject start and the query end (otherwise). If multiple subjects have the same gap, all ties are reported.</p>
+<p>Find subject intervals that are nearest to the query interval. If any overlaps are present, all overlapping intervals are reported. If no overlaps are present, the subject interval with the smallest gap to the query is reported. A gap is defined as the distance between the query start and subject end (for queries after the subject) or the subject start and the query end (otherwise). If multiple subjects have the same gap, all ties are reported. (This logic is inspired by the behavior of the function of the same name in the <a href="https://bioconductor.org/packages/IRanges"><b>IRanges</b> R/Bioconductor package</a>.)</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
@@ -459,7 +459,7 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
     <tr><td class="paramdir"></td><td class="paramname">query_start</td><td>Start of the query interval. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">query_end</td><td>Non-inclusive end of the query interval. </td></tr>
     <tr><td class="paramdir"></td><td class="paramname">params</td><td>Parameters for the search. </td></tr>
-    <tr><td class="paramdir"></td><td class="paramname">workspace</td><td>Workspace for intermediate data structures. This can be default-constructed and re-used across <code><a class="el" href="#ade7d2e27bd85d84a0cd210d3fcce7335">overlaps_any()</a></code> calls. </td></tr>
+    <tr><td class="paramdir"></td><td class="paramname">workspace</td><td>Workspace for intermediate data structures. This can be default-constructed and re-used across <code><a class="el" href="#af720d430bc215ae05f621304f182a56d">nearest()</a></code> calls. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">matches</td><td>On output, vector of indices of the nearest subject intervals to the query interval. Indices are reported in arbitrary order. </td></tr>
   </table>
   </dd>
