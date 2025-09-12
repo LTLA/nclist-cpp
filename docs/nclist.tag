@@ -350,29 +350,29 @@
       <type>void</type>
       <name>nearest</name>
       <anchorfile>namespacenclist.html</anchorfile>
-      <anchor>af720d430bc215ae05f621304f182a56d</anchor>
-      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const NearestParameters&lt; Position_ &gt; &amp;params, NearestWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
+      <anchor>a7d8c8b1f3b14d49fc755f5234adfc445</anchor>
+      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, const Position_ query_start, const Position_ query_end, const NearestParameters&lt; Position_ &gt; &amp;params, NearestWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>overlaps_any</name>
       <anchorfile>namespacenclist.html</anchorfile>
-      <anchor>ade7d2e27bd85d84a0cd210d3fcce7335</anchor>
-      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const OverlapsAnyParameters&lt; Position_ &gt; &amp;params, OverlapsAnyWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
+      <anchor>a97645c7a2943e287899f4adb70471e1c</anchor>
+      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, const Position_ query_start, const Position_ query_end, const OverlapsAnyParameters&lt; Position_ &gt; &amp;params, OverlapsAnyWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>overlaps_end</name>
       <anchorfile>namespacenclist.html</anchorfile>
-      <anchor>a26c1a70487c3d4a5243622b1bf757523</anchor>
-      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const OverlapsEndParameters&lt; Position_ &gt; &amp;params, OverlapsEndWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
+      <anchor>a200a64c1a7f8cec83c115a35e09ca67e</anchor>
+      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, const Position_ query_start, const Position_ query_end, const OverlapsEndParameters&lt; Position_ &gt; &amp;params, OverlapsEndWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>overlaps_equal</name>
       <anchorfile>namespacenclist.html</anchorfile>
-      <anchor>a749d236b974c3bacc843cc96548d7e20</anchor>
-      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const OverlapsEqualParameters&lt; Position_ &gt; &amp;params, OverlapsEqualWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
+      <anchor>a61b99116de7d43afe7813541f4ba4e69</anchor>
+      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, const Position_ query_start, const Position_ query_end, const OverlapsEqualParameters&lt; Position_ &gt; &amp;params, OverlapsEqualWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -385,15 +385,15 @@
       <type>void</type>
       <name>overlaps_start</name>
       <anchorfile>namespacenclist.html</anchorfile>
-      <anchor>aebdbb3bf7c28aad8d1237d030a6c97f6</anchor>
-      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const OverlapsStartParameters&lt; Position_ &gt; &amp;params, OverlapsStartWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
+      <anchor>a21c25f436df33566b860a5087ae73f4c</anchor>
+      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, const Position_ query_start, const Position_ query_end, const OverlapsStartParameters&lt; Position_ &gt; &amp;params, OverlapsStartWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>overlaps_within</name>
       <anchorfile>namespacenclist.html</anchorfile>
-      <anchor>a17c768a993d651cfa8bd50080cfdd913</anchor>
-      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const OverlapsWithinParameters&lt; Position_ &gt; &amp;params, OverlapsWithinWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
+      <anchor>a5646169d9f6d1d40d5ecf80db77c6783</anchor>
+      <arglist>(const Nclist&lt; Index_, Position_ &gt; &amp;subject, const Position_ query_start, const Position_ query_end, const OverlapsWithinParameters&lt; Position_ &gt; &amp;params, OverlapsWithinWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</arglist>
     </member>
   </compound>
   <compound kind="page">

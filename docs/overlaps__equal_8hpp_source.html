@@ -130,10 +130,10 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Index_, <span class="keyword">typename</span> Position_&gt;</div>
 <div class="foldopen" id="foldopen00084" data-start="{" data-end="}">
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno"><a class="line" href="namespacenclist.html#a749d236b974c3bacc843cc96548d7e20">   84</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespacenclist.html#a749d236b974c3bacc843cc96548d7e20">overlaps_equal</a>(</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno"><a class="line" href="namespacenclist.html#a61b99116de7d43afe7813541f4ba4e69">   84</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespacenclist.html#a61b99116de7d43afe7813541f4ba4e69">overlaps_equal</a>(</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structnclist_1_1Nclist.html">Nclist&lt;Index_, Position_&gt;</a>&amp; subject,</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    Position_ query_start,</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    Position_ query_end,</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keyword">const</span> Position_ query_start,</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keyword">const</span> Position_ query_end,</div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structnclist_1_1OverlapsEqualParameters.html">OverlapsEqualParameters&lt;Position_&gt;</a>&amp; params,</div>
 <div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <a class="code hl_struct" href="structnclist_1_1OverlapsEqualWorkspace.html">OverlapsEqualWorkspace&lt;Index_&gt;</a>&amp; workspace,</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    std::vector&lt;Index_&gt;&amp; matches)</div>
@@ -204,14 +204,14 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        effective_query_end = safe_subtract_gap(query_end, params.<a class="code hl_variable" href="structnclist_1_1OverlapsEqualParameters.html#a0b5cababa232c36917e4df6638a00547">max_gap</a>);</div>
 <div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>    }</div>
 <div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span> </div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keyword">auto</span> find_first_child = [&amp;](Index_ children_start, Index_ children_end) -&gt; Index_ {</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        <span class="keyword">auto</span> ebegin = subject.ends.begin();</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <span class="keyword">auto</span> estart = ebegin + children_start; </div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        <span class="keyword">auto</span> eend = ebegin + children_end;</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>    <span class="keyword">const</span> <span class="keyword">auto</span> find_first_child = [&amp;](<span class="keyword">const</span> Index_ children_start, <span class="keyword">const</span> Index_ children_end) -&gt; Index_ {</div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>        <span class="keyword">const</span> <span class="keyword">auto</span> ebegin = subject.ends.begin();</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>        <span class="keyword">const</span> <span class="keyword">auto</span> estart = ebegin + children_start; </div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>        <span class="keyword">const</span> <span class="keyword">auto</span> eend = ebegin + children_end;</div>
 <div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>        <span class="keywordflow">return</span> std::lower_bound(estart, eend, effective_query_end) - ebegin;</div>
 <div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>    };</div>
 <div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span> </div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="keyword">auto</span> is_finished = [&amp;](Position_ subject_start) -&gt; <span class="keywordtype">bool</span> {</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>    <span class="keyword">const</span> <span class="keyword">auto</span> is_finished = [&amp;](<span class="keyword">const</span> Position_ subject_start) -&gt; <span class="keywordtype">bool</span> {</div>
 <div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span>        <span class="keywordflow">if</span> (subject_start &gt; query_start) {</div>
 <div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>            <span class="keywordflow">if</span> (params.<a class="code hl_variable" href="structnclist_1_1OverlapsEqualParameters.html#a0b5cababa232c36917e4df6638a00547">max_gap</a> &gt; 0) {</div>
 <div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>                <span class="keywordflow">if</span> (subject_start - query_start &gt; params.<a class="code hl_variable" href="structnclist_1_1OverlapsEqualParameters.html#a0b5cababa232c36917e4df6638a00547">max_gap</a>) {</div>
@@ -261,12 +261,12 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        }</div>
 <div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span> </div>
 <div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>        <span class="keyword">const</span> <span class="keyword">auto</span>&amp; current_node = subject.nodes[current_subject];</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        <span class="keyword">auto</span> subject_start = subject.starts[current_subject];</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keyword">auto</span> subject_end = subject.ends[current_subject];</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        <span class="keyword">const</span> <span class="keyword">auto</span> subject_start = subject.starts[current_subject];</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keyword">const</span> <span class="keyword">auto</span> subject_end = subject.ends[current_subject];</div>
 <div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span> </div>
 <div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        <span class="keywordflow">if</span> (params.<a class="code hl_variable" href="structnclist_1_1OverlapsEqualParameters.html#a5ec1ee3a73d0590e39b593425f4a382a">min_overlap</a> &gt; 0) {</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            <span class="keyword">auto</span> common_end = std::min(subject_end, query_end);</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            <span class="keyword">auto</span> common_start = std::max(subject_start, query_start);</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>            <span class="keyword">const</span> <span class="keyword">auto</span> common_end = std::min(subject_end, query_end);</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>            <span class="keyword">const</span> <span class="keyword">auto</span> common_start = std::max(subject_start, query_start);</div>
 <div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>            <span class="keywordflow">if</span> (common_end &lt;= common_start || common_end - common_start &lt; params.<a class="code hl_variable" href="structnclist_1_1OverlapsEqualParameters.html#a5ec1ee3a73d0590e39b593425f4a382a">min_overlap</a>) {</div>
 <div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>                <span class="comment">// No point processing the children if the minimum overlap isn&#39;t satisified.</span></div>
 <div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>                <span class="keywordflow">continue</span>;</div>
@@ -295,7 +295,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>        }</div>
 <div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span> </div>
 <div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>        <span class="keywordflow">if</span> (current_node.children_start != current_node.children_end) {</div>
-<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>            Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>            <span class="keyword">const</span> Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);</div>
 <div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>            <span class="keywordflow">if</span> (start_pos != current_node.children_end) {</div>
 <div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>                workspace.history.emplace_back(start_pos, current_node.children_end);</div>
 <div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>            }</div>
@@ -309,7 +309,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00259" name="l00259"></a><span class="lineno">  259</span><span class="preprocessor">#endif</span></div>
 <div class="ttc" id="abuild_8hpp_html"><div class="ttname"><a href="build_8hpp.html">build.hpp</a></div><div class="ttdoc">Build a nested containment list.</div></div>
 <div class="ttc" id="anamespacenclist_html"><div class="ttname"><a href="namespacenclist.html">nclist</a></div><div class="ttdoc">Header-only library for nested containment lists.</div><div class="ttdef"><b>Definition</b> build.hpp:17</div></div>
-<div class="ttc" id="anamespacenclist_html_a749d236b974c3bacc843cc96548d7e20"><div class="ttname"><a href="namespacenclist.html#a749d236b974c3bacc843cc96548d7e20">nclist::overlaps_equal</a></div><div class="ttdeci">void overlaps_equal(const Nclist&lt; Index_, Position_ &gt; &amp;subject, Position_ query_start, Position_ query_end, const OverlapsEqualParameters&lt; Position_ &gt; &amp;params, OverlapsEqualWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</div><div class="ttdef"><b>Definition</b> overlaps_equal.hpp:84</div></div>
+<div class="ttc" id="anamespacenclist_html_a61b99116de7d43afe7813541f4ba4e69"><div class="ttname"><a href="namespacenclist.html#a61b99116de7d43afe7813541f4ba4e69">nclist::overlaps_equal</a></div><div class="ttdeci">void overlaps_equal(const Nclist&lt; Index_, Position_ &gt; &amp;subject, const Position_ query_start, const Position_ query_end, const OverlapsEqualParameters&lt; Position_ &gt; &amp;params, OverlapsEqualWorkspace&lt; Index_ &gt; &amp;workspace, std::vector&lt; Index_ &gt; &amp;matches)</div><div class="ttdef"><b>Definition</b> overlaps_equal.hpp:84</div></div>
 <div class="ttc" id="astructnclist_1_1Nclist_html"><div class="ttname"><a href="structnclist_1_1Nclist.html">nclist::Nclist</a></div><div class="ttdoc">Pre-built nested containment list.</div><div class="ttdef"><b>Definition</b> build.hpp:28</div></div>
 <div class="ttc" id="astructnclist_1_1OverlapsEqualParameters_html"><div class="ttname"><a href="structnclist_1_1OverlapsEqualParameters.html">nclist::OverlapsEqualParameters</a></div><div class="ttdoc">Parameters for overlaps_equal().</div><div class="ttdef"><b>Definition</b> overlaps_equal.hpp:45</div></div>
 <div class="ttc" id="astructnclist_1_1OverlapsEqualParameters_html_a0b5cababa232c36917e4df6638a00547"><div class="ttname"><a href="structnclist_1_1OverlapsEqualParameters.html#a0b5cababa232c36917e4df6638a00547">nclist::OverlapsEqualParameters::max_gap</a></div><div class="ttdeci">Position_ max_gap</div><div class="ttdef"><b>Definition</b> overlaps_equal.hpp:50</div></div>
