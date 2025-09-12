@@ -107,7 +107,7 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
     static_assert(std::is_same<Position, ArrayElement<EndArray_> >::value);
 
     // We want to sort by increasing start but DECREASING end, so that the children sort after their parents. 
-    auto cmp = [&](Index_ l, Index_ r) -> bool {
+    const auto cmp = [&](const Index_ l, const Index_ r) -> bool {
         if (starts[l] == starts[r]) {
             return ends[l] > ends[r];
         } else {
@@ -118,7 +118,7 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
         std::sort(of_interest.begin(), of_interest.end(), cmp);
     }
 
-    auto num_intervals = of_interest.size();
+    const auto num_intervals = of_interest.size();
     typedef typename Nclist<Index_, Position>::Node WorkingNode;
     std::vector<WorkingNode> working_list;
     working_list.reserve(num_intervals);
@@ -164,7 +164,7 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
 
     Index_ num_children_to_copy = 0;
     Index_ num_duplicates_to_copy = 0;
-    auto process_level = [&](const Level& curlevel) -> void {
+    const auto process_level = [&](const Level& curlevel) -> void {
         auto& original_node = working_list[curlevel.offset];
 
         if (curlevel.num_children) {
@@ -180,7 +180,7 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
         }
     };
 
-    auto left_shift_indices = [&]() -> void {
+    const auto left_shift_indices = [&]() -> void {
         if (num_children_to_copy) {
             if (children_used != children_tmp_boundary) { // protect the copy, though this should only be relevant at the end of the traversal.
                 std::copy_n(working_children.begin() + children_tmp_boundary, num_children_to_copy, working_children.begin() + children_used);
@@ -200,10 +200,10 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
 
     Index_ last_id = 0;
     for (const auto& curid : of_interest) {
-        auto curend = ends[curid];
+        const auto curend = ends[curid];
 
         if (levels.size() > 1) { // i.e., We've processed our first interval.
-            auto last_end = levels.back().end;
+            const auto last_end = levels.back().end;
             if (last_end < curend) { // If we're no longer nested within the previous interval, we need to back up to the root until we are nested.
                 num_children_to_copy = 0;
                 num_duplicates_to_copy = 0;
@@ -224,7 +224,7 @@ Nclist<Index_, ArrayElement<StartArray_> > build_internal(std::vector<Index_> of
             }
         }
 
-        auto used = working_list.size();
+        const auto used = working_list.size();
         working_list.emplace_back(curid);
         ++(levels.back().num_children);
         --children_tmp_boundary;

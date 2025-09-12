@@ -83,8 +83,8 @@ struct OverlapsEqualParameters {
 template<typename Index_, typename Position_>
 void overlaps_equal(
     const Nclist<Index_, Position_>& subject,
-    Position_ query_start,
-    Position_ query_end,
+    const Position_ query_start,
+    const Position_ query_end,
     const OverlapsEqualParameters<Position_>& params,
     OverlapsEqualWorkspace<Index_>& workspace,
     std::vector<Index_>& matches)
@@ -155,14 +155,14 @@ void overlaps_equal(
         effective_query_end = safe_subtract_gap(query_end, params.max_gap);
     }
 
-    auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
-        auto ebegin = subject.ends.begin();
-        auto estart = ebegin + children_start; 
-        auto eend = ebegin + children_end;
+    const auto find_first_child = [&](const Index_ children_start, const Index_ children_end) -> Index_ {
+        const auto ebegin = subject.ends.begin();
+        const auto estart = ebegin + children_start; 
+        const auto eend = ebegin + children_end;
         return std::lower_bound(estart, eend, effective_query_end) - ebegin;
     };
 
-    auto is_finished = [&](Position_ subject_start) -> bool {
+    const auto is_finished = [&](const Position_ subject_start) -> bool {
         if (subject_start > query_start) {
             if (params.max_gap > 0) {
                 if (subject_start - query_start > params.max_gap) {
@@ -212,12 +212,12 @@ void overlaps_equal(
         }
 
         const auto& current_node = subject.nodes[current_subject];
-        auto subject_start = subject.starts[current_subject];
-        auto subject_end = subject.ends[current_subject];
+        const auto subject_start = subject.starts[current_subject];
+        const auto subject_end = subject.ends[current_subject];
 
         if (params.min_overlap > 0) {
-            auto common_end = std::min(subject_end, query_end);
-            auto common_start = std::max(subject_start, query_start);
+            const auto common_end = std::min(subject_end, query_end);
+            const auto common_start = std::max(subject_start, query_start);
             if (common_end <= common_start || common_end - common_start < params.min_overlap) {
                 // No point processing the children if the minimum overlap isn't satisified.
                 continue;
@@ -246,7 +246,7 @@ void overlaps_equal(
         }
 
         if (current_node.children_start != current_node.children_end) {
-            Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
+            const Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
             if (start_pos != current_node.children_end) {
                 workspace.history.emplace_back(start_pos, current_node.children_end);
             }

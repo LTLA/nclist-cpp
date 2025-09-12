@@ -81,8 +81,8 @@ struct OverlapsWithinParameters {
 template<typename Index_, typename Position_>
 void overlaps_within(
     const Nclist<Index_, Position_>& subject,
-    Position_ query_start,
-    Position_ query_end,
+    const Position_ query_start,
+    const Position_ query_end,
     const OverlapsWithinParameters<Position_>& params,
     OverlapsWithinWorkspace<Index_>& workspace,
     std::vector<Index_>& matches)
@@ -125,19 +125,19 @@ void overlaps_within(
      *
      ****************************************/
 
-    Position_ query_width = query_end - query_start;
+    const Position_ query_width = query_end - query_start;
     if (params.min_overlap > 0 && query_width < params.min_overlap) {
         return;
     }
 
-    auto find_first_child = [&](Index_ children_start, Index_ children_end) -> Index_ {
-        auto ebegin = subject.ends.begin();
-        auto estart = ebegin + children_start; 
-        auto eend = ebegin + children_end;
+    const auto find_first_child = [&](const Index_ children_start, const Index_ children_end) -> Index_ {
+        const auto ebegin = subject.ends.begin();
+        const auto estart = ebegin + children_start; 
+        const auto eend = ebegin + children_end;
         return std::lower_bound(estart, eend, query_end) - ebegin;
     };
 
-    auto is_finished = [&](Position_ subject_start) -> bool {
+    const auto is_finished = [&](const Position_ subject_start) -> bool {
         return subject_start > query_start;
     };
 
@@ -168,9 +168,9 @@ void overlaps_within(
         // but the children could be okay so we proceed to the next level of the NClist.
         bool add_self = true; 
         if (params.max_gap.has_value()) {
-            auto subject_start = subject.starts[current_subject];
-            auto subject_end = subject.ends[current_subject];
-            auto subject_width = subject_end - subject_start;
+            const auto subject_start = subject.starts[current_subject];
+            const auto subject_end = subject.ends[current_subject];
+            const auto subject_width = subject_end - subject_start;
             if (subject_width - query_width > *(params.max_gap)) {
                 add_self = false;
             }
@@ -187,7 +187,7 @@ void overlaps_within(
         }
 
         if (current_node.children_start != current_node.children_end) {
-            Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
+            const Index_ start_pos = find_first_child(current_node.children_start, current_node.children_end);
             if (start_pos != current_node.children_end) {
                 workspace.history.emplace_back(start_pos, current_node.children_end);
             }
