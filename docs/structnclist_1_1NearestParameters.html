@@ -106,6 +106,8 @@ $(function(){ initResizable(false); });
 Public Attributes</h2></td></tr>
 <tr class="memitem:ab5ca4984a4b8adb5b31e89b741a23ce8" id="r_ab5ca4984a4b8adb5b31e89b741a23ce8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab5ca4984a4b8adb5b31e89b741a23ce8">quit_on_first</a> = false</td></tr>
 <tr class="separator:ab5ca4984a4b8adb5b31e89b741a23ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0f57d27a7315ad8d0f69f6b42e337a5" id="r_ab0f57d27a7315ad8d0f69f6b42e337a5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab0f57d27a7315ad8d0f69f6b42e337a5">adjacent_equals_overlap</a> = false</td></tr>
+<tr class="separator:ab0f57d27a7315ad8d0f69f6b42e337a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename Position_&gt;<br />
@@ -117,6 +119,23 @@ struct nclist::NearestParameters&lt; Position_ &gt;</div><p>Parameters for <code
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="ab0f57d27a7315ad8d0f69f6b42e337a5" name="ab0f57d27a7315ad8d0f69f6b42e337a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0f57d27a7315ad8d0f69f6b42e337a5">&#9670;&#160;</a></span>adjacent_equals_overlap</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Position_ &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="structnclist_1_1NearestParameters.html">nclist::NearestParameters</a>&lt; Position_ &gt;::adjacent_equals_overlap = false</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Whether to consider immediately-adjacent subject intervals to be equally "nearest" to the query as an overlapping subject interval. If <code>true</code>, both overlapping and immediately-adjacent subject intervals (i.e., a gap of zero) will be reported in <code>matches</code>. Otherwise, immediately-adjacent subjects will only be reported if overlapping subjects are not present. </p>
+
+</div>
+</div>
 <a id="ab5ca4984a4b8adb5b31e89b741a23ce8" name="ab5ca4984a4b8adb5b31e89b741a23ce8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab5ca4984a4b8adb5b31e89b741a23ce8">&#9670;&#160;</a></span>quit_on_first</h2>
 

@@ -101,6 +101,13 @@
       <anchor>ab5ca4984a4b8adb5b31e89b741a23ce8</anchor>
       <arglist></arglist>
     </member>
+    <member kind="variable">
+      <type>bool</type>
+      <name>adjacent_equals_overlap</name>
+      <anchorfile>structnclist_1_1NearestParameters.html</anchorfile>
+      <anchor>ab0f57d27a7315ad8d0f69f6b42e337a5</anchor>
+      <arglist></arglist>
+    </member>
   </compound>
   <compound kind="struct">
     <name>nclist::NearestWorkspace</name>

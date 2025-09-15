@@ -445,7 +445,8 @@ template&lt;typename Index_ , typename Position_ &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Find subject intervals that are nearest to the query interval. If any overlaps are present, all overlapping intervals are reported. If no overlaps are present, the subject interval with the smallest gap to the query is reported. A gap is defined as the distance between the query start and subject end (for queries after the subject) or the subject start and the query end (otherwise). If multiple subjects have the same gap, all ties are reported. (This logic is inspired by the behavior of the function of the same name in the <a href="https://bioconductor.org/packages/IRanges"><b>IRanges</b> R/Bioconductor package</a>.)</p>
+<p>Find subject intervals that are nearest to the query interval. If any overlaps are present, all overlapping intervals are reported. If no overlaps are present, the subject interval with the smallest gap to the query is reported. A gap is defined as the distance between the query start and subject end (for queries after the subject) or the subject start and the query end (otherwise). If multiple subjects have the same gap, all ties are reported.</p>
+<p>This function is based on its counterpart of the same name in the <a href="https://bioconductor.org/packages/IRanges"><b>IRanges</b> R/Bioconductor package</a>. Users should set <code><a class="el" href="structnclist_1_1NearestParameters.html#ab0f57d27a7315ad8d0f69f6b42e337a5">NearestParameters::adjacent_equals_overlap</a> = true</code> to obtain the same results as the R package,</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Index_</td><td>Integer type of the subject interval index. </td></tr>
