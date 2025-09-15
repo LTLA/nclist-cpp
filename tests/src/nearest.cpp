@@ -26,20 +26,21 @@ TEST(Nearest, SimpleDisjoint) {
     nclist::NearestWorkspace<int> workspace;
     std::vector<int> output;
 
+    nclist::NearestParameters<int> default_p;
     {
-        nclist::nearest(index, 50, 80, nclist::NearestParameters<int>(), workspace, output);
+        nclist::nearest(index, 50, 80, default_p, workspace, output);
         ASSERT_EQ(output.size(), 1);
         EXPECT_EQ(output[0], 2);
     }
 
     {
-        nclist::nearest(index, 520, 600, nclist::NearestParameters<int>(), workspace, output);
+        nclist::nearest(index, 520, 600, default_p, workspace, output);
         ASSERT_EQ(output.size(), 1);
         EXPECT_EQ(output[0], 3);
     }
 
     {
-        nclist::nearest(index, 180, 190, nclist::NearestParameters<int>(), workspace, output);
+        nclist::nearest(index, 180, 190, default_p, workspace, output);
         ASSERT_EQ(output.size(), 2);
         std::sort(output.begin(), output.end());
         EXPECT_EQ(output[0], 0);
@@ -48,13 +49,13 @@ TEST(Nearest, SimpleDisjoint) {
 
     // Now testing all the overlaps.
     {
-        nclist::nearest(index, 150, 200, nclist::NearestParameters<int>(), workspace, output);
+        nclist::nearest(index, 150, 200, default_p, workspace, output);
         ASSERT_EQ(output.size(), 1);
         EXPECT_EQ(output[0], 2);
     }
 
     {
-        nclist::nearest(index, 150, 300, nclist::NearestParameters<int>(), workspace, output);
+        nclist::nearest(index, 150, 300, default_p, workspace, output);
         ASSERT_EQ(output.size(), 2);
         std::sort(output.begin(), output.end());
         EXPECT_EQ(output[0], 0);
@@ -62,7 +63,7 @@ TEST(Nearest, SimpleDisjoint) {
     }
 
     {
-        nclist::nearest(index, 210, 310, nclist::NearestParameters<int>(), workspace, output);
+        nclist::nearest(index, 210, 310, default_p, workspace, output);
         ASSERT_EQ(output.size(), 2);
         std::sort(output.begin(), output.end());
         EXPECT_EQ(output[0], 0);
@@ -70,7 +71,7 @@ TEST(Nearest, SimpleDisjoint) {
     }
 
     {
-        nclist::nearest(index, 90, 600, nclist::NearestParameters<int>(), workspace, output);
+        nclist::nearest(index, 90, 600, default_p, workspace, output);
         ASSERT_EQ(output.size(), 4);
         std::sort(output.begin(), output.end());
         EXPECT_EQ(output[0], 0);
@@ -252,6 +253,125 @@ TEST(Nearest, NestedFlush) {
 
 /********************************************************************/
 
+TEST(Nearest, SimpleAdjacent) {
+    std::vector<int> test_starts { 200, 300, 100, 500 };
+    std::vector<int> test_ends { 280, 320, 170, 510 };
+
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+    nclist::NearestWorkspace<int> workspace;
+    std::vector<int> output;
+
+    nclist::NearestParameters<int> default_p, adj_p;
+    adj_p.adjacent_equals_overlap = true;
+
+    {
+        nclist::nearest(index, 80, 150, default_p, workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 2);
+
+        nclist::nearest(index, 80, 150, adj_p, workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 2);
+    }
+
+    {
+        nclist::nearest(index, 170, 270, default_p, workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 0);
+
+        nclist::nearest(index, 170, 270, adj_p, workspace, output);
+        ASSERT_EQ(output.size(), 2);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 2);
+    }
+
+    {
+        nclist::nearest(index, 300, 500, default_p, workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 1);
+
+        nclist::nearest(index, 300, 500, adj_p, workspace, output);
+        ASSERT_EQ(output.size(), 2);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 1);
+        EXPECT_EQ(output[1], 3);
+    }
+}
+
+TEST(Nearest, AdjacentNested) {
+    std::vector<int> test_starts { 0, 20, 20, 40, 70, 90 };
+    std::vector<int> test_ends { 100, 60, 30, 50, 95, 95 };
+
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+    nclist::NearestWorkspace<int> workspace;
+    std::vector<int> output;
+
+    nclist::NearestParameters<int> default_p, adj_p;
+    adj_p.adjacent_equals_overlap = true;
+
+    {
+        nclist::nearest(index, 0, 20, default_p, workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 0);
+
+        nclist::nearest(index, 0, 20, adj_p, workspace, output);
+        ASSERT_EQ(output.size(), 3);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+        EXPECT_EQ(output[2], 2);
+    }
+
+    {
+        nclist::nearest(index, 30, 40, default_p, workspace, output);
+        ASSERT_EQ(output.size(), 2);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+
+        nclist::nearest(index, 30, 40, adj_p, workspace, output);
+        ASSERT_EQ(output.size(), 4);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+        EXPECT_EQ(output[2], 2);
+        EXPECT_EQ(output[3], 3);
+    }
+
+    {
+        nclist::nearest(index, 95, 120, default_p, workspace, output);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_EQ(output[0], 0);
+
+        nclist::nearest(index, 95, 120, adj_p, workspace, output);
+        ASSERT_EQ(output.size(), 3);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 4);
+        EXPECT_EQ(output[2], 5);
+    }
+
+    // As a control.
+    {
+        nclist::nearest(index, 35, 60, default_p, workspace, output);
+        ASSERT_EQ(output.size(), 3);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+        EXPECT_EQ(output[2], 3);
+
+        nclist::nearest(index, 35, 60, adj_p, workspace, output);
+        ASSERT_EQ(output.size(), 3);
+        std::sort(output.begin(), output.end());
+        EXPECT_EQ(output[0], 0);
+        EXPECT_EQ(output[1], 1);
+        EXPECT_EQ(output[2], 3);
+    }
+}
+
+/********************************************************************/
+
 class NearestReferenceTest : public OverlapsTestCore, public ::testing::TestWithParam<std::tuple<int, int> > {
 protected:
     void SetUp() {
@@ -262,12 +382,13 @@ protected:
 TEST_P(NearestReferenceTest, Basic) {
     auto index = nclist::build(nsubject, subject_start.data(), subject_end.data());
     nclist::NearestWorkspace<int> work;
-    nclist::NearestParameters<int> params;
+    nclist::NearestParameters<int> params, adj_params;
+    adj_params.adjacent_equals_overlap = true;
     std::vector<int> results;
 
     nclist::OverlapsAnyWorkspace<int> owork;
     nclist::OverlapsAnyParameters<int> oparams;
-    std::vector<int> ref_results;
+    std::vector<int> ref_results, adj_ref_results;
 
     const int nsubjects = subject_end.size();
     std::vector<std::pair<int, int> > all_ends, all_starts;
@@ -286,13 +407,14 @@ TEST_P(NearestReferenceTest, Basic) {
         nclist::nearest(index, qs, qe, params, work, results);
 
         nclist::overlaps_any(index, qs, qe, oparams, owork, ref_results);
-        if (!ref_results.empty()) {
+        const bool has_overlaps = !ref_results.empty();
+        if (has_overlaps) {
             std::sort(ref_results.begin(), ref_results.end());
             std::sort(results.begin(), results.end());
             EXPECT_EQ(results, ref_results);
-            continue;
         }
 
+        adj_ref_results.swap(ref_results);
         ref_results.clear();
 
         std::optional<int> to_previous, to_next; 
@@ -305,7 +427,9 @@ TEST_P(NearestReferenceTest, Basic) {
             to_next = all_starts[last_at].first - qe;
         }
 
-        if (!to_next.has_value() || (to_previous.has_value() && *to_previous <= *to_next)) {
+        bool is_adjacent = false;
+        if (to_previous.has_value() && (!to_next.has_value() || *to_previous <= *to_next)) {
+            is_adjacent = is_adjacent || (*to_previous == 0);
             const auto limit = all_ends[first_at - 1].first;
             while (first_at > 0) {
                 --first_at;
@@ -316,7 +440,8 @@ TEST_P(NearestReferenceTest, Basic) {
             }
         }
 
-        if (!to_previous.has_value() || (to_next.has_value() && *to_next <= *to_previous)) {
+        if (to_next.has_value() && (!to_previous.has_value() || *to_next <= *to_previous)) {
+            is_adjacent = is_adjacent || (*to_next == 0);
             const auto limit = all_starts[last_at].first;
             while (last_at < nsubjects) {
                 if (all_starts[last_at].first > limit) {
@@ -327,9 +452,19 @@ TEST_P(NearestReferenceTest, Basic) {
             }
         }
 
-        std::sort(ref_results.begin(), ref_results.end());
+        if (!has_overlaps) {
+            std::sort(ref_results.begin(), ref_results.end());
+            std::sort(results.begin(), results.end());
+            EXPECT_EQ(results, ref_results);
+        }
+
+        nclist::nearest(index, qs, qe, adj_params, work, results);
+        if (!has_overlaps || is_adjacent) {
+            adj_ref_results.insert(adj_ref_results.end(), ref_results.begin(), ref_results.end());
+        }
+        std::sort(adj_ref_results.begin(), adj_ref_results.end());
         std::sort(results.begin(), results.end());
-        EXPECT_EQ(results, ref_results);
+        EXPECT_EQ(results, adj_ref_results);
     }
 }
 
@@ -539,6 +674,42 @@ TEST(Nearest, EarlyQuit) {
     nclist::nearest(index, 300, 550, params, workspace, output);
     ASSERT_EQ(output.size(), 1);
     EXPECT_TRUE(output[0] == 1 || output[0] == 4);
+}
+
+TEST(Nearest, AdjacentEarlyQuit) {
+    std::vector<int> test_starts{ 200, 300, 200, 100, 500, 150 };
+    std::vector<int> test_ends  { 280, 320, 250, 170, 510, 170 };
+    auto index = nclist::build<int, int>(test_starts.size(), test_starts.data(), test_ends.data());
+
+    nclist::NearestWorkspace<int> workspace;
+    nclist::NearestParameters<int> params;
+    params.adjacent_equals_overlap = true;
+    params.quit_on_first = true;
+    std::vector<int> output;
+
+    nclist::nearest(index, 170, 190, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 3 || output[0] == 5);
+
+    nclist::nearest(index, 175, 200, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 0 || output[0] == 2);
+
+    nclist::nearest(index, 170, 200, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 0 || output[0] == 2 || output[0] == 3 || output[0] == 5);
+
+    nclist::nearest(index, 200, 300, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 0 || output[0] == 1 || output[0] == 2);
+
+    nclist::nearest(index, 250, 290, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 0 || output[0] == 2);
+
+    nclist::nearest(index, 120, 150, params, workspace, output);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output[0] == 3 || output[0] == 5);
 }
 
 TEST(Nearest, ZeroWidth) {

@@ -114,7 +114,7 @@ void overlaps_any(
      * Earlier "sibling" intervals cannot overlap with the query interval, nor can their children.
      * We do so using a binary search (std::upper_bound) on `subject_ends` - recall that these are sorted for children of each node.
      *
-     * We then iterate until the first interval `j` where `query_end < subject_starts[j]`, at which point we stop.
+     * We then iterate until the first interval `j` where `query_end <= subject_starts[j]`, at which point we stop.
      * This is because `j`, the children of `j`, nor any sibling intervals after `j` can overlap with the query interval, so there's no point in traversing those nodes. 
      * Any subject interval encountered during this iteration is reported as an overlap, and we process its children in the same manner.
      *
